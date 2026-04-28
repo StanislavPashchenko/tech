@@ -1,0 +1,89 @@
+{% extends 'catalog/site_base.html' %}
+
+{% block title %}{{ section_name }} - TechGuide{% endblock %}
+
+{% block content %}
+<section class="section-hero">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb site-breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products_index' lang %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ section_name }}</li>
+            </ol>
+        </nav>
+        <span class="eyebrow">{% if lang == 'ru' %}Категория техники{% elif lang == 'ua' %}Категорія техніки{% else %}Appliance category{% endif %}</span>
+        <h1>{{ section_name }}</h1>
+        <p>
+            {% if lang == 'ru' %}
+                Отбирайте модели по бренду и характеристикам, затем переходите к карточке с описанием и типовыми неисправностями.
+            {% elif lang == 'ua' %}
+                Відбирайте моделі за брендом і характеристиками, а потім переходьте до картки з описом і типовими несправностями.
+            {% else %}
+                Filter models by brand and specifications, then open a focused page with details and common breakdowns.
+            {% endif %}
+        </p>
+    </div>
+    <div class="section-summary-card">
+        <strong>{{ products_count }}</strong>
+        <span>{% if lang == 'ru' %}моделей в разделе{% elif lang == 'ua' %}моделей у розділі{% else %}models in this section{% endif %}</span>
+    </div>
+</section>
+
+<section class="catalog-layout">
+    <aside class="catalog-sidebar">
+        {% include 'catalog/partials/sidebar_filters.html' %}
+    </aside>
+
+    <div class="catalog-results">
+        {% for brand_group in brand_groups %}
+        <section class="brand-cluster">
+            <div class="brand-cluster-head">
+                <h2>{{ brand_group.name }}</h2>
+                <span>{{ brand_group.products|length }}</span>
+            </div>
+            <div class="product-grid">
+                {% for product in brand_group.products %}
+                <article class="product-card">
+                    <div class="product-media">
+                        {% if product.images %}
+                        <img src="{{ product.images.0 }}" alt="{{ product.name }}">
+                        {% else %}
+                        <div class="product-media-placeholder">{{ product.brand_name }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="product-card-body">
+                        <div class="product-card-meta">
+                            <span class="product-badge">{{ product.brand_name }}</span>
+                        </div>
+                        <h3>{{ product.name }}</h3>
+                        <p>{{ product.description|default:''|truncatewords:24 }}</p>
+                        <a class="product-link" href="{{ product.detail_url }}">{% if lang == 'ru' %}Открыть карточку{% elif lang == 'ua' %}Відкрити картку{% else %}Open details{% endif %}</a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% empty %}
+        <div class="empty-state">
+            <h2>{% if lang == 'ru' %}Ничего не найдено{% elif lang == 'ua' %}Нічого не знайдено{% else %}Nothing found{% endif %}</h2>
+            <p>{% if lang == 'ru' %}Сбросьте фильтры или выберите другую категорию.{% elif lang == 'ua' %}Скиньте фільтри або оберіть іншу категорію.{% else %}Reset the filters or choose another category.{% endif %}</p>
+        </div>
+        {% endfor %}
+
+        {% if products.has_other_pages %}
+        <nav aria-label="Page navigation" class="site-pagination-wrap">
+            <ul class="pagination site-pagination">
+                {% if products.has_previous %}
+                <li class="page-item"><a class="page-link" href="?{% if query_string_without_page %}{{ query_string_without_page }}&{% endif %}page={{ products.previous_page_number }}">{% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ products.number }} / {{ products.paginator.num_pages }}</span></li>
+                {% if products.has_next %}
+                <li class="page-item"><a class="page-link" href="?{% if query_string_without_page %}{{ query_string_without_page }}&{% endif %}page={{ products.next_page_number }}">{% if lang == 'ru' %}Вперёд{% elif lang == 'ua' %}Далі{% else %}Next{% endif %}</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TechGuide Service{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'catalog/site.css' %}" rel="stylesheet">
+</head>
+<body class="{% block body_class %}site-shell{% endblock %}">
+    <div class="site-bg">
+        <div class="site-glow site-glow-left"></div>
+        <div class="site-glow site-glow-right"></div>
+    </div>
+
+    <header class="site-header">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg site-nav">
+                <a class="navbar-brand site-brand" href="{% url 'index_lang' lang %}">
+                    <span class="site-brand-mark">TG</span>
+                    <span>
+                        <strong>TechGuide</strong>
+                        <small>
+                            {% if lang == 'ru' %}ремонт техники{% elif lang == 'ua' %}ремонт техніки{% else %}appliance repair{% endif %}
+                        </small>
+                    </span>
+                </a>
+                <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="siteNav">
+                    <ul class="navbar-nav me-auto site-menu">
+                        <li class="nav-item"><a class="nav-link" href="{% url 'index_lang' lang %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'products_index' lang %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'articles_index' lang %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a></li>
+                    </ul>
+
+                    <form class="site-search" action="{% url 'search' lang %}" method="get">
+                        <input type="search" name="q" value="{{ query|default:'' }}" placeholder="{% if lang == 'ru' %}Поиск по модели или ошибке{% elif lang == 'ua' %}Пошук за моделлю або помилкою{% else %}Search by model or issue{% endif %}" aria-label="Search">
+                        <button type="submit">{% if lang == 'ru' %}Найти{% elif lang == 'ua' %}Знайти{% else %}Search{% endif %}</button>
+                    </form>
+
+                    <div class="site-languages">
+                        <a href="{{ language_urls.ru }}" class="{% if lang == 'ru' %}is-active{% endif %}">RU</a>
+                        <a href="{{ language_urls.ua }}" class="{% if lang == 'ua' %}is-active{% endif %}">UA</a>
+                        <a href="{{ language_urls.en }}" class="{% if lang == 'en' %}is-active{% endif %}">EN</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="site-footer-card">
+                <div>
+                    <h2>TechGuide Service</h2>
+                    <p>
+                        {% if lang == 'ru' %}
+                            Удобный каталог бытовой техники, типовых поломок и полезных инструкций.
+                        {% elif lang == 'ua' %}
+                            Зручний каталог побутової техніки, типових поломок і корисних інструкцій.
+                        {% else %}
+                            A practical catalog of household appliances, common breakdowns, and repair guides.
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="site-footer-links">
+                    <a href="{% url 'products_index' lang %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a>
+                    <a href="{% url 'articles_index' lang %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a>
+                    <a href="{% url 'search' lang %}?q=">{% if lang == 'ru' %}Поиск{% elif lang == 'ua' %}Пошук{% else %}Search{% endif %}</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

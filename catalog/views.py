@@ -325,6 +325,15 @@ def _get_article_labels(lang):
     return labels.get(lang, labels['en'])
 
 
+def _get_published_articles_queryset():
+    now = timezone.now()
+    return (
+        Article.objects.filter(is_published=True)
+        .filter(Q(published_at__isnull=True) | Q(published_at__lte=now))
+        .prefetch_related('images')
+    )
+
+
 def _prepare_article(article, lang):
     article.title = getattr(article, f'title_{lang}', '') or article.title_ru or article.title_ua or article.title_en
     article.excerpt = getattr(article, f'excerpt_{lang}', '') or ''
@@ -445,25 +454,42 @@ def _prepare_product(product, lang):
     return product
 
 def index(request, lang='ru'):
+    categories = list(
+        Category.objects.annotate(product_count=Count('products'))
+        .order_by('-product_count', 'id')
+    )
+    articles = [
+        _prepare_article(article, lang)
+        for article in _get_published_articles_queryset()[:3]
+    ]
     context = {
-        'show_categories': False,
+        'categories': categories[:6],
+        'featured_articles': articles,
+        'metrics': {
+            'products': Product.objects.count(),
+            'breakdowns': Breakdown.objects.count(),
+            'categories': len(categories),
+        },
         'language_urls': _build_language_urls('index_lang'),
         'lang': lang,
+        'page_mode': 'home',
     }
-    template_path = f'catalog/{lang}/index.html'
+    template_path = 'catalog/home.html'
     return render(request, template_path, context)
 
 def products_index(request, lang='ru'):
     categories = Category.objects.annotate(
         product_count=Count('products')
-    )
+    ).order_by('-product_count', 'id')
     context = {
         'categories': categories,
-        'show_categories': True,
+        'featured_articles': [],
+        'metrics': None,
         'language_urls': _build_language_urls('products_index'),
         'lang': lang,
+        'page_mode': 'catalog',
     }
-    template_path = f'catalog/{lang}/index.html'
+    template_path = 'catalog/home.html'
     return render(request, template_path, context)
 
 def section_view(request, section_id, lang='ru'):
@@ -523,6 +549,7 @@ def section_view(request, section_id, lang='ru'):
     context = {
         'category': category,
         'products': products,
+        'products_count': paginator.count,
         'brand_groups': brand_groups,
         'brands': brands,
         'selected_brands': selected_brands,
@@ -537,7 +564,7 @@ def section_view(request, section_id, lang='ru'):
         'lang': lang,
         'section_name': _get_section_name(category, lang),
     }
-    template_path = f'catalog/{lang}/section.html'
+    template_path = 'catalog/section_page.html'
     return render(request, template_path, context)
 
 
@@ -579,7 +606,7 @@ def product_detail_view(request, lang, section_id, product_slug):
         )
 
     context = {
-        'base_template': f'catalog/{lang}/base.html',
+        'base_template': 'catalog/site_base.html',
         'category': category,
         'section_name': _get_section_name(category, lang),
         'product': selected_product,
@@ -609,21 +636,17 @@ def search_view(request, lang='ru'):
 
     context = {
         'products': products,
+        'products_count': products.paginator.count,
         'query': query,
         'language_urls': _build_language_urls('search', query_params=request.GET),
         'lang': lang,
     }
-    template_path = f'catalog/{lang}/search.html'
+    template_path = 'catalog/search_results.html'
     return render(request, template_path, context)
 
 
 def articles_index(request, lang='ru'):
-    now = timezone.now()
-    articles_qs = (
-        Article.objects.filter(is_published=True)
-        .filter(Q(published_at__isnull=True) | Q(published_at__lte=now))
-        .prefetch_related('images')
-    )
+    articles_qs = _get_published_articles_queryset()
     paginator = Paginator(articles_qs, 9)
     page_number = request.GET.get('page')
     articles_page = paginator.get_page(page_number)
@@ -634,21 +657,17 @@ def articles_index(request, lang='ru'):
         'articles': articles_page,
         'labels': _get_article_labels(lang),
         'language_urls': _build_language_urls('articles_index'),
-        'base_template': f'catalog/{lang}/base.html',
+        'base_template': 'catalog/site_base.html',
         'lang': lang,
     }
     return render(request, 'catalog/articles_index.html', context)
 
 
 def article_detail_view(request, lang, article_id, article_slug):
-    now = timezone.now()
     article = get_object_or_404(
-        Article.objects.prefetch_related('images'),
+        _get_published_articles_queryset(),
         id=article_id,
-        is_published=True,
     )
-    if article.published_at and article.published_at > now:
-        raise Http404('Article not found')
 
     article = _prepare_article(article, lang)
     if article.detail_slug != article_slug:
@@ -658,7 +677,7 @@ def article_detail_view(request, lang, article_id, article_slug):
         'article': article,
         'labels': _get_article_labels(lang),
         'language_urls': _build_article_detail_language_urls(article),
-        'base_template': f'catalog/{lang}/base.html',
+        'base_template': 'catalog/site_base.html',
         'lang': lang,
     }
     return render(request, 'catalog/article_detail.html', context)

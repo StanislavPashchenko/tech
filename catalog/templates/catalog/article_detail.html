@@ -3,67 +3,63 @@
 {% block title %}{{ article.title }} - TechGuide{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'articles_index' lang %}">{{ labels.articles }}</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ article.title }}</li>
-            </ol>
-        </nav>
-    </div>
-</div>
+<article class="article-shell">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb site-breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'articles_index' lang %}">{{ labels.articles }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ article.title }}</li>
+        </ol>
+    </nav>
 
-<article class="card shadow-sm">
-    <div class="card-body p-4 p-lg-5">
-        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <div class="article-topbar">
+        <div class="d-flex flex-wrap gap-2">
             <a href="{% url 'articles_index' lang %}" class="btn btn-primary">{{ labels.back_to_articles }}</a>
-            <a href="{{ language_urls.ru }}" class="btn btn-sm {% if lang == 'ru' %}btn-primary{% else %}btn-outline-primary{% endif %}">RU</a>
-            <a href="{{ language_urls.ua }}" class="btn btn-sm {% if lang == 'ua' %}btn-primary{% else %}btn-outline-primary{% endif %}">UA</a>
-            <a href="{{ language_urls.en }}" class="btn btn-sm {% if lang == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}">EN</a>
+            <a href="{{ language_urls.ru }}" class="btn {% if lang == 'ru' %}btn-primary{% else %}btn-outline-primary{% endif %}">RU</a>
+            <a href="{{ language_urls.ua }}" class="btn {% if lang == 'ua' %}btn-primary{% else %}btn-outline-primary{% endif %}">UA</a>
+            <a href="{{ language_urls.en }}" class="btn {% if lang == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}">EN</a>
         </div>
-
-        <div class="small text-muted mb-3">
-            {{ labels.published }}:
+        <span class="article-meta">
             {% if article.published_at %}{{ article.published_at|date:"d.m.Y H:i" }}{% else %}{{ article.created_at|date:"d.m.Y H:i" }}{% endif %}
-        </div>
+        </span>
+    </div>
 
-        <h1 class="display-6 mb-4">{{ article.title }}</h1>
+    <h1>{{ article.title }}</h1>
 
-        {% if article.display_images %}
-        <div class="mb-4">
-            {% if article.display_images|length > 1 %}
-            <div id="article-carousel-{{ article.id }}" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner rounded overflow-hidden">
-                    {% for image in article.display_images %}
-                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                        <img src="{{ image.image.url }}" class="d-block w-100 article-image" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
-                    </div>
-                    {% endfor %}
+    {% if article.excerpt %}
+    <p class="article-lead">{{ article.excerpt }}</p>
+    {% endif %}
+
+    {% if article.display_images %}
+    <div class="mb-4">
+        {% if article.display_images|length > 1 %}
+        <div id="article-carousel-{{ article.id }}" class="carousel slide article-carousel" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {% for image in article.display_images %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <img src="{{ image.image.url }}" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#article-carousel-{{ article.id }}" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#article-carousel-{{ article.id }}" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
+                {% endfor %}
             </div>
-            {% else %}
-            {% with image=article.primary_image %}
-            <img src="{{ image.image.url }}" class="img-fluid rounded article-image w-100" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
-            {% endwith %}
-            {% endif %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#article-carousel-{{ article.id }}" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#article-carousel-{{ article.id }}" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
         </div>
-        {% endif %}
-
-        {% if article.excerpt %}
-        <p class="lead">{{ article.excerpt }}</p>
-        {% endif %}
-
-        <div class="article-content">
-            {{ article.content|linebreaks }}
+        {% else %}
+        {% with image=article.primary_image %}
+        <div class="article-cover">
+            <img src="{{ image.image.url }}" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
         </div>
+        {% endwith %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="article-content">
+        {{ article.content|linebreaks }}
     </div>
 </article>
 {% endblock %}

@@ -1,52 +1,52 @@
-<div class="card shadow-sm sticky-lg-top">
-    <div class="card-body">
-        <h2 class="h5 mb-3">{{ filter_labels.filters_title }}</h2>
-        <form method="get" action="{% url 'product_section' lang category.id_name %}">
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="h6 mb-0">{{ filter_labels.brands_title }}</h3>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#brandFilters-{{ lang }}" aria-expanded="false" aria-controls="brandFilters-{{ lang }}">{{ filter_labels.show_label }}</button>
-                </div>
-                <div class="collapse mt-2" id="brandFilters-{{ lang }}">
-                    <div class="list-group">
-                        {% for brand in brands %}
-                        <label class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <input class="form-check-input me-2" type="checkbox" name="brand" value="{{ brand.slug }}"{% if brand.selected %} checked{% endif %}>
-                                {{ brand.name }}
-                            </span>
-                            <span class="badge text-bg-light">{{ brand.count }}</span>
-                        </label>
-                        {% empty %}
-                        <div class="list-group-item text-muted">{{ filter_labels.all_brands_label }}</div>
-                        {% endfor %}
-                    </div>
+<div class="filters-card">
+    <h2 class="h5 mb-3">{{ filter_labels.filters_title }}</h2>
+    <form method="get" action="{% url 'product_section' lang category.id_name %}">
+        <div class="filter-group">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h6 mb-0">{{ filter_labels.brands_title }}</h3>
+                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#brandFilters-{{ lang }}" aria-expanded="false" aria-controls="brandFilters-{{ lang }}">{{ filter_labels.show_label }}</button>
+            </div>
+            <div class="collapse mt-2" id="brandFilters-{{ lang }}">
+                <div class="filter-option-list">
+                    {% for brand in brands %}
+                    <label class="filter-option">
+                        <span>
+                            <input type="checkbox" name="brand" value="{{ brand.slug }}"{% if brand.selected %} checked{% endif %}>
+                            {{ brand.name }}
+                        </span>
+                        <span class="filter-option-count">{{ brand.count }}</span>
+                    </label>
+                    {% empty %}
+                    <div class="filter-option">{{ filter_labels.all_brands_label }}</div>
+                    {% endfor %}
                 </div>
             </div>
+        </div>
 
-            {% for filter_group in vacuum_filter_groups %}
-            <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="h6 mb-0">{{ filter_group.title }}</h3>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#{{ filter_group.collapse_id }}" aria-expanded="false" aria-controls="{{ filter_group.collapse_id }}">{{ filter_labels.show_label }}</button>
-                </div>
-                <div class="collapse mt-2" id="{{ filter_group.collapse_id }}">
-                    <div class="list-group">
-                        {% for option in filter_group.options %}
-                        <label class="list-group-item">
-                            <input class="form-check-input me-2" type="checkbox" name="{{ filter_group.param }}" value="{{ option.value }}"{% if option.selected %} checked{% endif %}>
+        {% for filter_group in vacuum_filter_groups %}
+        <div class="filter-group">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h6 mb-0">{{ filter_group.title }}</h3>
+                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#{{ filter_group.collapse_id }}" aria-expanded="false" aria-controls="{{ filter_group.collapse_id }}">{{ filter_labels.show_label }}</button>
+            </div>
+            <div class="collapse mt-2" id="{{ filter_group.collapse_id }}">
+                <div class="filter-option-list">
+                    {% for option in filter_group.options %}
+                    <label class="filter-option">
+                        <span>
+                            <input type="checkbox" name="{{ filter_group.param }}" value="{{ option.value }}"{% if option.selected %} checked{% endif %}>
                             {{ option.label }}
-                        </label>
-                        {% endfor %}
-                    </div>
+                        </span>
+                    </label>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
+        </div>
+        {% endfor %}
 
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">{{ filter_labels.apply_label }}</button>
-                <a href="{% url 'product_section' lang category.id_name %}" class="btn btn-outline-secondary">{{ filter_labels.reset_label }}</a>
-            </div>
-        </form>
-    </div>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">{{ filter_labels.apply_label }}</button>
+            <a href="{% url 'product_section' lang category.id_name %}" class="btn btn-outline-secondary">{{ filter_labels.reset_label }}</a>
+        </div>
+    </form>
 </div>

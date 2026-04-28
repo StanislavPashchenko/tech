@@ -3,62 +3,93 @@
 {% block title %}{{ labels.articles }} - TechGuide{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
+<section class="section-hero">
+    <div>
         <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
+            <ol class="breadcrumb site-breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ labels.articles }}</li>
             </ol>
         </nav>
-        <h1 class="display-6">{{ labels.articles }}</h1>
-    </div>
-</div>
-
-<div class="row g-4">
-    {% for article in articles %}
-    <div class="col-md-6 col-xl-4">
-        <div class="card shadow-sm">
-            {% if article.primary_image %}
-            <img src="{{ article.primary_image.image.url }}" class="card-img-top article-image" alt="{{ article.primary_image_alt }}">
+        <span class="eyebrow">{{ labels.articles }}</span>
+        <h1>{{ labels.articles }}</h1>
+        <p>
+            {% if lang == 'ru' %}
+                Материалы по диагностике, уходу и типовым поломкам с акцентом на понятные действия, а не на сухой справочник.
+            {% elif lang == 'ua' %}
+                Матеріали з діагностики, догляду та типових поломок з акцентом на зрозумілі дії, а не на сухий довідник.
+            {% else %}
+                Reads about diagnostics, maintenance, and common breakdowns with a focus on practical next steps.
             {% endif %}
-            <div class="card-body d-flex flex-column">
-                <div class="small text-muted mb-2">
-                    {{ labels.published }}:
-                    {% if article.published_at %}{{ article.published_at|date:"d.m.Y" }}{% else %}{{ article.created_at|date:"d.m.Y" }}{% endif %}
-                </div>
-                <h2 class="h5">{{ article.title }}</h2>
-                {% if article.excerpt %}
-                <p class="text-muted flex-grow-1">{{ article.excerpt|truncatechars:180 }}</p>
-                {% else %}
-                <p class="text-muted flex-grow-1">{{ article.content|striptags|truncatechars:180 }}</p>
-                {% endif %}
-                <a href="{{ article.detail_url }}" class="btn btn-primary mt-auto">{{ labels.read_more }}</a>
-            </div>
+        </p>
+    </div>
+    <div class="section-summary-card">
+        <strong>{{ articles.paginator.count }}</strong>
+        <span>{{ labels.articles|lower }}</span>
+    </div>
+</section>
+
+{% if articles %}
+<section class="articles-layout">
+    {% with featured=articles.0 %}
+    <article class="article-feature">
+        <div class="article-feature-media">
+            {% if featured.primary_image %}
+            <img src="{{ featured.primary_image.image.url }}" alt="{{ featured.primary_image_alt }}">
+            {% else %}
+            <div class="article-feature-placeholder">TechGuide</div>
+            {% endif %}
         </div>
+        <div class="article-feature-body">
+            <span class="article-date">
+                {% if featured.published_at %}{{ featured.published_at|date:"d.m.Y" }}{% else %}{{ featured.created_at|date:"d.m.Y" }}{% endif %}
+            </span>
+            <h2>{{ featured.title }}</h2>
+            <p>{% if featured.excerpt %}{{ featured.excerpt|truncatechars:260 }}{% else %}{{ featured.content|striptags|truncatechars:260 }}{% endif %}</p>
+            <a class="article-feature-link" href="{{ featured.detail_url }}">{{ labels.read_more }}</a>
+        </div>
+    </article>
+    {% endwith %}
+
+    {% if articles|length > 1 %}
+    <div class="article-stream">
+        {% for article in articles|slice:"1:" %}
+        <article class="article-row">
+            <div class="article-row-media">
+                {% if article.primary_image %}
+                <img src="{{ article.primary_image.image.url }}" alt="{{ article.primary_image_alt }}">
+                {% else %}
+                <div class="article-row-placeholder">TG</div>
+                {% endif %}
+            </div>
+            <div class="article-row-body">
+                <span class="article-date">
+                    {% if article.published_at %}{{ article.published_at|date:"d.m.Y" }}{% else %}{{ article.created_at|date:"d.m.Y" }}{% endif %}
+                </span>
+                <h3>{{ article.title }}</h3>
+                <p>{% if article.excerpt %}{{ article.excerpt|truncatechars:220 }}{% else %}{{ article.content|striptags|truncatechars:220 }}{% endif %}</p>
+                <a href="{{ article.detail_url }}">{{ labels.read_more }}</a>
+            </div>
+        </article>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="alert alert-info">{{ labels.no_articles }}</div>
-    </div>
-    {% endfor %}
+    {% endif %}
+</section>
+{% else %}
+<div class="empty-state">
+    <h2>{{ labels.no_articles }}</h2>
 </div>
+{% endif %}
 
 {% if articles.has_other_pages %}
-<nav aria-label="Page navigation" class="mt-4">
-    <ul class="pagination justify-content-center">
+<nav aria-label="Page navigation" class="site-pagination-wrap">
+    <ul class="pagination site-pagination">
         {% if articles.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ articles.previous_page_number }}">{% if lang == 'en' %}Previous{% else %}Назад{% endif %}</a>
-        </li>
+        <li class="page-item"><a class="page-link" href="?page={{ articles.previous_page_number }}">{% if lang == 'en' %}Previous{% else %}Назад{% endif %}</a></li>
         {% endif %}
-
         <li class="page-item active"><span class="page-link">{{ articles.number }} / {{ articles.paginator.num_pages }}</span></li>
-
         {% if articles.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ articles.next_page_number }}">{% if lang == 'en' %}Next{% else %}Вперед{% endif %}</a>
-        </li>
+        <li class="page-item"><a class="page-link" href="?page={{ articles.next_page_number }}">{% if lang == 'en' %}Next{% else %}Далее{% endif %}</a></li>
         {% endif %}
     </ul>
 </nav>

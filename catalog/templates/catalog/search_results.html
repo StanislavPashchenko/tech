@@ -1,0 +1,69 @@
+{% extends 'catalog/site_base.html' %}
+
+{% block title %}
+    {% if lang == 'ru' %}Поиск: {{ query }}{% elif lang == 'ua' %}Пошук: {{ query }}{% else %}Search: {{ query }}{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="section-hero search-hero">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb site-breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{% if lang == 'ru' %}Поиск{% elif lang == 'ua' %}Пошук{% else %}Search{% endif %}</li>
+            </ol>
+        </nav>
+        <span class="eyebrow">{% if lang == 'ru' %}Результаты{% elif lang == 'ua' %}Результати{% else %}Results{% endif %}</span>
+        <h1>{% if lang == 'ru' %}Поиск по запросу{% elif lang == 'ua' %}Пошук за запитом{% else %}Search results for{% endif %} "{{ query }}"</h1>
+        <p>{% if lang == 'ru' %}Переходите в карточку товара, чтобы открыть характеристики и типовые неисправности.{% elif lang == 'ua' %}Переходьте до картки товару, щоб відкрити характеристики та типові несправності.{% else %}Open any product page to view specifications and common breakdowns.{% endif %}</p>
+    </div>
+    <div class="section-summary-card">
+        <strong>{{ products_count }}</strong>
+        <span>{% if lang == 'ru' %}найдено результатов{% elif lang == 'ua' %}знайдено результатів{% else %}results found{% endif %}</span>
+    </div>
+</section>
+
+<section class="product-grid search-grid">
+    {% for product in products %}
+    <article class="product-card">
+        <div class="product-media">
+            {% if product.images %}
+            <img src="{{ product.images.0 }}" alt="{{ product.name }}">
+            {% else %}
+            <div class="product-media-placeholder">{{ product.brand_name }}</div>
+            {% endif %}
+        </div>
+        <div class="product-card-body">
+            <div class="product-card-meta">
+                <span class="product-badge">{{ product.brand_name }}</span>
+                <span class="product-badge product-badge-soft">
+                    {% if lang == 'ru' %}{{ product.category.name_ru }}{% elif lang == 'ua' %}{{ product.category.name_ua }}{% else %}{{ product.category.name_en }}{% endif %}
+                </span>
+            </div>
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description|default:''|truncatewords:24 }}</p>
+            <a class="product-link" href="{{ product.detail_url }}">{% if lang == 'ru' %}Открыть карточку{% elif lang == 'ua' %}Відкрити картку{% else %}Open details{% endif %}</a>
+        </div>
+    </article>
+    {% empty %}
+    <div class="empty-state">
+        <h2>{% if lang == 'ru' %}Совпадений не найдено{% elif lang == 'ua' %}Збігів не знайдено{% else %}No matches found{% endif %}</h2>
+        <p>{% if lang == 'ru' %}Попробуйте другую модель, бренд или часть названия.{% elif lang == 'ua' %}Спробуйте іншу модель, бренд або частину назви.{% else %}Try another model, brand, or part of the name.{% endif %}</p>
+    </div>
+    {% endfor %}
+</section>
+
+{% if products.has_other_pages %}
+<nav aria-label="Page navigation" class="site-pagination-wrap">
+    <ul class="pagination site-pagination">
+        {% if products.has_previous %}
+        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.previous_page_number }}">{% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ products.number }} / {{ products.paginator.num_pages }}</span></li>
+        {% if products.has_next %}
+        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.next_page_number }}">{% if lang == 'ru' %}Вперёд{% elif lang == 'ua' %}Далі{% else %}Next{% endif %}</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
