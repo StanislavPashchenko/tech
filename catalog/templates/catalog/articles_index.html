@@ -1,0 +1,66 @@
+{% extends base_template %}
+
+{% block title %}{{ labels.articles }} - TechGuide{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ labels.articles }}</li>
+            </ol>
+        </nav>
+        <h1 class="display-6">{{ labels.articles }}</h1>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for article in articles %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card shadow-sm">
+            {% if article.primary_image %}
+            <img src="{{ article.primary_image.image.url }}" class="card-img-top article-image" alt="{{ article.primary_image_alt }}">
+            {% endif %}
+            <div class="card-body d-flex flex-column">
+                <div class="small text-muted mb-2">
+                    {{ labels.published }}:
+                    {% if article.published_at %}{{ article.published_at|date:"d.m.Y" }}{% else %}{{ article.created_at|date:"d.m.Y" }}{% endif %}
+                </div>
+                <h2 class="h5">{{ article.title }}</h2>
+                {% if article.excerpt %}
+                <p class="text-muted flex-grow-1">{{ article.excerpt|truncatechars:180 }}</p>
+                {% else %}
+                <p class="text-muted flex-grow-1">{{ article.content|striptags|truncatechars:180 }}</p>
+                {% endif %}
+                <a href="{{ article.detail_url }}" class="btn btn-primary mt-auto">{{ labels.read_more }}</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">{{ labels.no_articles }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if articles.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if articles.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ articles.previous_page_number }}">{% if lang == 'en' %}Previous{% else %}Назад{% endif %}</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active"><span class="page-link">{{ articles.number }} / {{ articles.paginator.num_pages }}</span></li>
+
+        {% if articles.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ articles.next_page_number }}">{% if lang == 'en' %}Next{% else %}Вперед{% endif %}</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

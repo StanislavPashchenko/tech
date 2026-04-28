@@ -1,0 +1,79 @@
+{% extends 'catalog/en/base.html' %}
+
+{% block title %}{{ section_name }} - Catalog{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products_index' lang %}">Products</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ section_name }}</li>
+            </ol>
+        </nav>
+        <h1 class="display-4">{{ section_name }}</h1>
+        <p class="lead">List of products in category: {{ section_name }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-9 order-2 order-lg-1">
+        {% for brand_group in brand_groups %}
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h2 class="h4">{{ brand_group.name }}</h2>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for product in brand_group.products %}
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    {% if product.images %}
+                    <img src="{{ product.images.0 }}" class="card-img-top p-3 product-image" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge bg-secondary">{{ product.brand_name }}</span>
+                        </div>
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text text-muted small">{{ product.description|truncatewords:20 }}</p>
+                        <a href="{{ product.detail_url }}" class="btn btn-outline-primary btn-sm mt-2">Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% empty %}
+        <div class="alert alert-info">No products found.</div>
+        {% endfor %}
+
+        {% if products.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if products.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% if query_string_without_page %}{{ query_string_without_page }}&{% endif %}page=1">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?{% if query_string_without_page %}{{ query_string_without_page }}&{% endif %}page={{ products.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ products.number }} / {{ products.paginator.num_pages }}</span></li>
+                {% if products.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% if query_string_without_page %}{{ query_string_without_page }}&{% endif %}page={{ products.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?{% if query_string_without_page %}{{ query_string_without_page }}&{% endif %}page={{ products.paginator.num_pages }}">Last &raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-3 order-1 order-lg-2 mb-4">
+        {% include 'catalog/partials/sidebar_filters.html' %}
+    </div>
+</div>
+{% endblock %}

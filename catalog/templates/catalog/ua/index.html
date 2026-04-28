@@ -1,0 +1,24 @@
+{% extends 'catalog/ua/base.html' %}
+
+{% block title %}Довідник побутової техніки{% endblock %}
+
+{% block content %}
+{% if show_categories %}
+<div class="row">
+    <div class="col-12 text-center mb-5">
+        <h1>Оберіть категорію</h1>
+    </div>
+    {% for cat in categories %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ cat.name_ua }}</h5>
+                <p class="text-muted small">Товарів: {{ cat.product_count }}</p>
+                <a href="{% url 'product_section' lang cat.id_name %}" class="btn btn-primary mt-3">Перейти</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

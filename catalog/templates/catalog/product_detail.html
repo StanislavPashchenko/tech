@@ -1,0 +1,121 @@
+{% extends base_template %}
+
+{% block title %}{{ product.name }} - {{ section_name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products_index' lang %}">{{ labels.products }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'product_section' lang category.id_name %}">{{ section_name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                {% if product.images|length > 1 %}
+                <div id="product-carousel-{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for img in product.images %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ img }}" class="d-block w-100 product-image" alt="{{ product.name }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#product-carousel-{{ product.id }}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#product-carousel-{{ product.id }}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                </div>
+                {% elif product.images %}
+                <img src="{{ product.images.0 }}" class="img-fluid product-image w-100" alt="{{ product.name }}">
+                {% else %}
+                <div class="bg-light border rounded d-flex align-items-center justify-content-center" style="min-height: 280px;">
+                    <span class="text-muted">{{ product.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% if breakdowns %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h2 class="h5 mb-3">{{ labels.breakdowns }}</h2>
+                <div class="accordion" id="breakdowns-accordion">
+                    {% for breakdown in breakdowns %}
+                    <div class="accordion-item">
+                        <h3 class="accordion-header" id="breakdown-heading-{{ forloop.counter }}">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#breakdown-collapse-{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="breakdown-collapse-{{ forloop.counter }}">
+                                {{ breakdown.display_title }}
+                            </button>
+                        </h3>
+                        <div id="breakdown-collapse-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="breakdown-heading-{{ forloop.counter }}" data-bs-parent="#breakdowns-accordion">
+                            <div class="accordion-body">
+                                {% for section in breakdown.display_sections %}
+                                <p class="fw-semibold mb-1">{{ section.label }}:</p>
+                                <p class="text-muted {% if forloop.last %}mb-0{% endif %}">{{ section.content|linebreaksbr }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                    <span class="badge bg-secondary">{{ labels.brand }}: {{ product.brand_name }}</span>
+                    {% if product.source_url %}
+                    <a href="{{ product.source_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm">{{ labels.source }}</a>
+                    {% endif %}
+                </div>
+
+                <h1 class="display-6 mb-3">{{ product.name }}</h1>
+
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <a href="{% url 'product_section' lang category.id_name %}" class="btn btn-primary">{{ labels.back_to_category }}</a>
+                    <a href="{{ language_urls.ru }}" class="btn btn-sm {% if lang == 'ru' %}btn-primary{% else %}btn-outline-primary{% endif %}">RU</a>
+                    <a href="{{ language_urls.ua }}" class="btn btn-sm {% if lang == 'ua' %}btn-primary{% else %}btn-outline-primary{% endif %}">UA</a>
+                    <a href="{{ language_urls.en }}" class="btn btn-sm {% if lang == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}">EN</a>
+                </div>
+
+                {% if product.description %}
+                <h2 class="h5">{{ labels.description }}</h2>
+                <p class="text-muted mb-4">{{ product.description|linebreaksbr }}</p>
+                {% endif %}
+
+                <h2 class="h5">{{ labels.specifications }}</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0">
+                        <tbody>
+                            {% for key, value in product.flat_specs.items %}
+                            <tr>
+                                <th style="width: 38%;">{{ key }}</th>
+                                <td>{{ value|linebreaksbr }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2">{{ labels.not_specified }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'catalog/base.html' %}
+
+{% block title %}
+    {% if lang == 'ru' %}Справочник бытовой техники{% elif lang == 'ua' %}Довідник побутової техніки{% else %}Household Appliance Catalog{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 text-center mb-5">
+        <h1>
+            {% if lang == 'ru' %}Выберите категорию{% elif lang == 'ua' %}Оберіть категорію{% else %}Select Category{% endif %}
+        </h1>
+    </div>
+    {% for cat in categories %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    {% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}
+                </h5>
+                <p class="text-muted small">
+                    {% if lang == 'ru' %}Товаров: {{ cat.product_count }}{% elif lang == 'ua' %}Товарів: {{ cat.product_count }}{% else %}Products: {{ cat.product_count }}{% endif %}
+                </p>
+                <a href="{% url 'section' lang cat.id_name %}" class="btn btn-primary mt-3">
+                    {% if lang == 'ru' %}Перейти{% elif lang == 'ua' %}Перейти{% else %}Go to category{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

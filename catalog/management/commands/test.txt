@@ -1,0 +1,2 @@
+python manage.py check_product_duplicates
+python manage.py test_specs_languages

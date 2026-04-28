@@ -1,0 +1,59 @@
+{% extends 'catalog/en/base.html' %}
+
+{% block title %}Search: {{ query }} - Catalog{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Search</li>
+            </ol>
+        </nav>
+        <h1 class="display-5">Search results for: "{{ query }}"</h1>
+        <p class="lead">Products found: {{ products.paginator.count }}</p>
+    </div>
+</div>
+
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            {% if product.images %}
+            <img src="{{ product.images.0 }}" class="card-img-top p-3 product-image" alt="{{ product.name }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text text-muted small">{{ product.description|truncatewords:20 }}</p>
+                <a href="{{ product.detail_url }}" class="btn btn-outline-primary btn-sm mt-2">Details</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><div class="alert alert-info">No products found for your request.</div></div>
+    {% endfor %}
+</div>
+
+{% if products.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if products.has_previous %}
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page=1">&laquo; First</a></li>
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.previous_page_number }}">Previous</a></li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ products.number }} / {{ products.paginator.num_pages }}</span></li>
+        {% if products.has_next %}
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.next_page_number }}">Next</a></li>
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.paginator.num_pages }}">Last &raquo;</a></li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

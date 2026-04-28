@@ -1,0 +1,135 @@
+{% extends 'catalog/base.html' %}
+
+{% block title %}
+    {{ section_name }} - {% if lang == 'ru' %}Справочник{% elif lang == 'ua' %}Довідник{% else %}Catalog{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ section_name }}</li>
+            </ol>
+        </nav>
+        <h1 class="display-4">{{ section_name }}</h1>
+        <p class="lead">
+            {% if lang == 'ru' %}Список товаров в категории{% elif lang == 'ua' %}Список товарів у категорії{% else %}List of products in category{% endif %}: {{ section_name }}
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            {% if product.images %}
+            <img src="{{ product.images.0 }}" class="card-img-top p-3 product-image" alt="{{ product.name }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text text-muted small">
+                    {{ product.description|truncatewords:20 }}
+                </p>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#modal-{{ forloop.counter }}">
+                    {% if lang == 'ru' %}Подробнее{% elif lang == 'ua' %}Детальніше{% else %}Details{% endif %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="modal-{{ forloop.counter }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ product.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-5">
+                                {% if product.images %}
+                                <div id="carousel-{{ forloop.counter }}" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        {% for img in product.images %}
+                                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                            <img src="{{ img }}" class="d-block w-100" alt="{{ product.name }}">
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ forloop.counter }}" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ forloop.counter }}" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon"></span>
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-7">
+                                <h6>{% if lang == 'ru' %}Описание{% elif lang == 'ua' %}Опис{% else %}Description{% endif %}</h6>
+                                <p>{{ product.description }}</p>
+                                
+                                <h6 class="mt-4">{% if lang == 'ru' %}Характеристики{% elif lang == 'ua' %}Характеристики{% else %}Specifications{% endif %}</h6>
+                                <table class="table table-sm table-striped">
+                                    <tbody>
+                                        {% for key, value in product.detailed_specs.general.items %}
+                                        <tr>
+                                            <th>{{ key }}</th>
+                                            <td>{{ value|linebreaksbr }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if lang == 'ru' %}Закрыть{% elif lang == 'ua' %}Закрити{% else %}Close{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            {% if lang == 'ru' %}Товары не найдены.{% elif lang == 'ua' %}Товарів не знайдено.{% else %}No products found.{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if products.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if products.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">&laquo; {% if lang == 'ru' %}Первая{% elif lang == 'ua' %}Перша{% else %}First{% endif %}</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.previous_page_number }}">{% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; {% if lang == 'ru' %}Первая{% elif lang == 'ua' %}Перша{% else %}First{% endif %}</span></li>
+            <li class="page-item disabled"><span class="page-link">{% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}</span></li>
+        {% endif %}
+
+        <li class="page-item active"><span class="page-link">{{ products.number }} / {{ products.paginator.num_pages }}</span></li>
+
+        {% if products.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.next_page_number }}">{% if lang == 'ru' %}Вперед{% elif lang == 'ua' %}Вперед{% else %}Next{% endif %}</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.paginator.num_pages }}">{% if lang == 'ru' %}Последняя{% elif lang == 'ua' %}Остання{% else %}Last{% endif %} &raquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">{% if lang == 'ru' %}Вперед{% elif lang == 'ua' %}Вперед{% else %}Next{% endif %}</span></li>
+            <li class="page-item disabled"><span class="page-link">{% if lang == 'ru' %}Последняя{% elif lang == 'ua' %}Остання{% else %}Last{% endif %} &raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
