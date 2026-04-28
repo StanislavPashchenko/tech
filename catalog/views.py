@@ -55,6 +55,10 @@ _DYNAMIC_FILTER_NOISE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _DYNAMIC_FILTER_PHOTO_PATTERN = re.compile(r'^(фото|photo)\s*\d+$', re.IGNORECASE)
+_ERROR_CODE_PATTERN = re.compile(
+    r'\b([A-Za-z]{1,4}[\s\-_]?\d{1,4}[A-Za-z]{0,3}|\d{1,4}[A-Za-z]{1,4})\b',
+    re.IGNORECASE,
+)
 
 def _get_specs_for_language(product, lang):
     specs_raw = getattr(product, f'specs_{lang}')
@@ -381,6 +385,8 @@ def _get_product_detail_labels(lang):
             'possible_causes': 'Возможные причины',
             'what_to_check': 'Что проверить',
             'how_to_fix': 'Как исправить',
+            'read_breakdown': 'Открыть страницу ошибки',
+            'back_to_product': 'Назад к товару',
         },
         'ua': {
             'products': 'Товари',
@@ -395,6 +401,8 @@ def _get_product_detail_labels(lang):
             'possible_causes': 'Можливі причини',
             'what_to_check': 'Що перевірити',
             'how_to_fix': 'Як виправити',
+            'read_breakdown': 'Відкрити сторінку помилки',
+            'back_to_product': 'Назад до товару',
         },
         'en': {
             'products': 'Products',
@@ -409,6 +417,8 @@ def _get_product_detail_labels(lang):
             'possible_causes': 'Possible causes',
             'what_to_check': 'What to check',
             'how_to_fix': 'How to fix',
+            'read_breakdown': 'Open breakdown page',
+            'back_to_product': 'Back to product',
         },
     }
     return labels.get(lang, labels['en'])
@@ -452,6 +462,51 @@ def _prepare_product(product, lang):
     product.detail_slug = _get_product_slug(product, lang)
     product.detail_url = reverse('product_detail', args=[lang, product.category.id_name, product.detail_slug])
     return product
+
+
+def _get_breakdown_slug(breakdown, lang):
+    suffix = '' if lang == 'ru' else f'_{lang}'
+    candidates = [
+        getattr(breakdown, f'title{suffix}', ''),
+        breakdown.title,
+        getattr(breakdown, f'description{suffix}', ''),
+        breakdown.description,
+    ]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        matches = _ERROR_CODE_PATTERN.finditer(candidate)
+        code_slugs = []
+        for match in matches:
+            code = match.group(1).replace(' ', '').replace('-', '_')
+            code_slug = slugify(code, allow_unicode=False).replace('-', '_')
+            if code_slug and code_slug not in code_slugs:
+                code_slugs.append(code_slug)
+        if not code_slugs:
+            continue
+        return '_'.join(code_slugs)
+
+    title = getattr(breakdown, f'title{suffix}', '') or breakdown.title or f'breakdown-{breakdown.id}'
+    slug = slugify(title, allow_unicode=True).replace('-', '_')
+    return slug or f'breakdown_{breakdown.id}'
+
+
+def _build_breakdown_detail_language_urls(category, product, breakdown, query_params=None):
+    return {
+        language_code: _build_url_with_query(
+            reverse(
+                'breakdown_detail',
+                kwargs={
+                    'lang': language_code,
+                    'section_id': category.id_name,
+                    'product_slug': _get_product_slug(product, language_code),
+                    'breakdown_slug': _get_breakdown_slug(breakdown, language_code),
+                },
+            ),
+            query_params,
+        )
+        for language_code in ('ru', 'ua', 'en')
+    }
 
 def index(request, lang='ru'):
     categories = list(
@@ -604,6 +659,17 @@ def product_detail_view(request, lang, section_id, product_slug):
             labels,
             lang,
         )
+        for breakdown in breakdowns:
+            breakdown.detail_slug = _get_breakdown_slug(breakdown, lang)
+            breakdown.detail_url = reverse(
+                'breakdown_detail',
+                kwargs={
+                    'lang': lang,
+                    'section_id': category.id_name,
+                    'product_slug': selected_product.detail_slug,
+                    'breakdown_slug': breakdown.detail_slug,
+                },
+            )
 
     context = {
         'base_template': 'catalog/site_base.html',
@@ -616,6 +682,74 @@ def product_detail_view(request, lang, section_id, product_slug):
         'lang': lang,
     }
     return render(request, 'catalog/product_detail.html', context)
+
+
+def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slug):
+    category = get_object_or_404(Category, id_name=section_id)
+    selected_product = None
+    labels = _get_product_detail_labels(lang)
+
+    for product in Product.objects.select_related('brand', 'category', 'breakdown_group').prefetch_related('breakdown_groups').filter(category=category).order_by('id'):
+        if _get_product_slug(product, lang) != product_slug:
+            continue
+        selected_product = _prepare_product(product, lang)
+        break
+
+    if selected_product is None:
+        raise Http404('Product not found')
+
+    breakdown_group_ids = set()
+    if selected_product.breakdown_group_id:
+        breakdown_group_ids.add(selected_product.breakdown_group_id)
+    breakdown_group_ids.update(selected_product.breakdown_groups.values_list('id', flat=True))
+    if selected_product.brand_id:
+        breakdown_group_ids.update(
+            selected_product.category.breakdown_groups.filter(
+                Q(brand_id=selected_product.brand_id) | Q(brand__isnull=True)
+            ).values_list('id', flat=True)
+        )
+    else:
+        breakdown_group_ids.update(
+            selected_product.category.breakdown_groups.filter(brand__isnull=True).values_list('id', flat=True)
+        )
+
+    if not breakdown_group_ids:
+        raise Http404('Breakdown not found')
+
+    breakdowns = _prepare_breakdowns(
+        Breakdown.objects.filter(breakdown_group_id__in=breakdown_group_ids).order_by('breakdown_group__name', 'title'),
+        labels,
+        lang,
+    )
+    for item in breakdowns:
+        item.detail_slug = _get_breakdown_slug(item, lang)
+        item.detail_url = reverse(
+            'breakdown_detail',
+            kwargs={
+                'lang': lang,
+                'section_id': category.id_name,
+                'product_slug': selected_product.detail_slug,
+                'breakdown_slug': item.detail_slug,
+            },
+        )
+
+    requested_breakdown_slug = slugify(breakdown_slug, allow_unicode=True).replace('-', '_')
+    breakdown = next((item for item in breakdowns if item.detail_slug == requested_breakdown_slug), None)
+    if breakdown is None:
+        raise Http404('Breakdown not found')
+
+    context = {
+        'base_template': 'catalog/site_base.html',
+        'category': category,
+        'section_name': _get_section_name(category, lang),
+        'product': selected_product,
+        'breakdown': breakdown,
+        'related_breakdowns': [item for item in breakdowns if item.id != breakdown.id][:6],
+        'language_urls': _build_breakdown_detail_language_urls(category, selected_product, breakdown, request.GET),
+        'labels': labels,
+        'lang': lang,
+    }
+    return render(request, 'catalog/breakdown_detail.html', context)
 
 def search_view(request, lang='ru'):
     query = request.GET.get('q', '')

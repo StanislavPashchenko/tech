@@ -1,0 +1,61 @@
+{% extends base_template %}
+
+{% block title %}{{ breakdown.display_title }} - {{ product.name }}{% endblock %}
+
+{% block content %}
+<section class="section-hero">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb site-breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'products_index' lang %}">{{ labels.products }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'product_section' lang category.id_name %}">{{ section_name }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ product.detail_url }}">{{ product.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ breakdown.display_title }}</li>
+            </ol>
+        </nav>
+        <span class="eyebrow">{{ labels.brand }}: {{ product.brand_name }}</span>
+        <h1>{{ breakdown.display_title }}</h1>
+        <p>
+            {% if lang == 'ru' %}
+                Отдельная страница ошибки для модели {{ product.name }}.
+            {% elif lang == 'ua' %}
+                Окрема сторінка помилки для моделі {{ product.name }}.
+            {% else %}
+                Dedicated breakdown page for {{ product.name }}.
+            {% endif %}
+        </p>
+        <p><a href="{{ product.detail_url }}">{{ labels.back_to_product }}</a></p>
+    </div>
+    <div class="section-summary-card">
+        <strong>{{ product.brand_name }}</strong>
+        <span>{{ section_name }}</span>
+    </div>
+</section>
+
+<section class="detail-layout">
+    <div class="detail-panel detail-summary">
+        {% for section in breakdown.display_sections %}
+        <section class="detail-copy-section">
+            <h2>{{ section.label }}</h2>
+            <p>{{ section.content|linebreaksbr }}</p>
+        </section>
+        {% endfor %}
+    </div>
+
+    {% if related_breakdowns %}
+    <div class="detail-side-stack">
+        <div class="detail-side-card">
+            <h2>{{ labels.breakdowns }}</h2>
+            <div class="breakdown-list">
+                {% for item in related_breakdowns %}
+                <article class="breakdown-item">
+                    <h3><a href="{{ item.detail_url }}">{{ item.display_title }}</a></h3>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

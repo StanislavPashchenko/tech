@@ -59,7 +59,8 @@
             <div class="breakdown-list">
                 {% for breakdown in breakdowns %}
                 <article class="breakdown-item">
-                    <h3>{{ breakdown.display_title }}</h3>
+                    <h3><a href="{{ breakdown.detail_url }}">{{ breakdown.display_title }}</a></h3>
+                    <p><a href="{{ breakdown.detail_url }}">{{ labels.read_breakdown }}</a></p>
                     {% for section in breakdown.display_sections %}
                     <div class="breakdown-section">
                         <strong>{{ section.label }}</strong>

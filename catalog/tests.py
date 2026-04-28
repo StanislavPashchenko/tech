@@ -1414,6 +1414,35 @@ class ProductDetailViewTests(TestCase):
         self.assertContains(response, self.breakdown.what_to_check)
         self.assertContains(response, self.breakdown.how_to_fix)
 
+    def test_product_detail_builds_breakdown_link_with_all_error_codes(self):
+        self.breakdown.title = 'Код E0 / E1 / E011 / E012 / E013 — сбой электроники панели или силовой платы'
+        self.breakdown.save(update_fields=['title'])
+
+        expected_breakdown_slug = 'e0_e1_e011_e012_e013'
+        expected_breakdown_url = reverse(
+            'breakdown_detail',
+            args=[
+                'ru',
+                self.category.id_name,
+                views._get_product_slug(self.product, 'ru'),
+                expected_breakdown_slug,
+            ],
+        )
+
+        product_detail_response = self.client.get(
+            reverse(
+                'product_detail',
+                args=['ru', self.category.id_name, views._get_product_slug(self.product, 'ru')],
+            )
+        )
+
+        self.assertEqual(product_detail_response.status_code, 200)
+        self.assertContains(product_detail_response, expected_breakdown_url)
+
+        breakdown_detail_response = self.client.get(expected_breakdown_url)
+        self.assertEqual(breakdown_detail_response.status_code, 200)
+        self.assertContains(breakdown_detail_response, self.breakdown.title)
+
     def test_product_detail_hides_empty_breakdown_fields(self):
         self.breakdown.what_to_check = ''
         self.breakdown.save(update_fields=['what_to_check'])
