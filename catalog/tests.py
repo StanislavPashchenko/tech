@@ -1,5 +1,6 @@
 from unittest.mock import patch
 from io import StringIO
+from types import SimpleNamespace
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -140,6 +141,47 @@ class FixWashingNoDryFromEkTests(SimpleTestCase):
         }
 
         self.assertTrue(specs_need_page_check(specs, 'ru'))
+
+
+class BreakdownSlugTests(SimpleTestCase):
+    def test_slug_ignores_device_model_codes_after_dash(self):
+        breakdown = SimpleNamespace(
+            id=1,
+            title='Code E6 — battery overheating on Dreame H11, H11 Max wet dry vacuum',
+            title_ua='',
+            title_en='Code E6 — battery overheating on Dreame H11, H11 Max wet dry vacuum',
+            description='',
+            description_ua='',
+            description_en='',
+        )
+
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'e6')
+
+    def test_slug_uses_real_error_phrase_and_ignores_model_name(self):
+        breakdown = SimpleNamespace(
+            id=2,
+            title='Сообщение Air Duct Blocked — засор воздушного тракта в вертикальном пылесосе Dreame R20',
+            title_ua='',
+            title_en='',
+            description='',
+            description_ua='',
+            description_en='',
+        )
+
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'air_duct_blocked')
+
+    def test_slug_collects_mixed_digit_and_letter_codes(self):
+        breakdown = SimpleNamespace(
+            id=3,
+            title='Коды E1, EE, EF — ошибка двигателя в моющем пылесосе Dreame H11, H11 Max, H12',
+            title_ua='',
+            title_en='',
+            description='',
+            description_ua='',
+            description_en='',
+        )
+
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'e1_ee_ef')
 
 
 class ProductAdminFormTests(TestCase):

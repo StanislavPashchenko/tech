@@ -57,11 +57,19 @@
 <nav aria-label="Page navigation" class="site-pagination-wrap">
     <ul class="pagination site-pagination">
         {% if products.has_previous %}
-        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.previous_page_number }}">{% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}</a></li>
+        <li class="page-item"><a class="page-link" href="?{% if pagination.query_string_without_page %}{{ pagination.query_string_without_page }}&{% endif %}page={{ products.previous_page_number }}">{% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}</a></li>
         {% endif %}
-        <li class="page-item active"><span class="page-link">{{ products.number }} / {{ products.paginator.num_pages }}</span></li>
+        {% for page_number in pagination.page_numbers %}
+            {% if page_number == '…' %}
+            <li class="page-item disabled"><span class="page-link">{{ page_number }}</span></li>
+            {% elif page_number == products.number %}
+            <li class="page-item active" aria-current="page"><span class="page-link">{{ page_number }}</span></li>
+            {% else %}
+            <li class="page-item"><a class="page-link" href="?{% if pagination.query_string_without_page %}{{ pagination.query_string_without_page }}&{% endif %}page={{ page_number }}">{{ page_number }}</a></li>
+            {% endif %}
+        {% endfor %}
         {% if products.has_next %}
-        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ products.next_page_number }}">{% if lang == 'ru' %}Вперёд{% elif lang == 'ua' %}Далі{% else %}Next{% endif %}</a></li>
+        <li class="page-item"><a class="page-link" href="?{% if pagination.query_string_without_page %}{{ pagination.query_string_without_page }}&{% endif %}page={{ products.next_page_number }}">{% if lang == 'ru' %}Вперёд{% elif lang == 'ua' %}Далі{% else %}Next{% endif %}</a></li>
         {% endif %}
     </ul>
 </nav>

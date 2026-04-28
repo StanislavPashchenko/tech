@@ -56,7 +56,11 @@ _DYNAMIC_FILTER_NOISE_PATTERN = re.compile(
 )
 _DYNAMIC_FILTER_PHOTO_PATTERN = re.compile(r'^(фото|photo)\s*\d+$', re.IGNORECASE)
 _ERROR_CODE_PATTERN = re.compile(
-    r'\b([A-Za-z]{1,4}[\s\-_]?\d{1,4}[A-Za-z]{0,3}|\d{1,4}[A-Za-z]{1,4})\b',
+    r'\b((?i:[A-Za-z]{1,4}[\s\-_]?\d{1,4}[A-Za-z]{0,3}|\d{1,4}[A-Za-z]{1,4})|[A-Z]{2,4})\b'
+)
+_BREAKDOWN_TITLE_SPLIT_PATTERN = re.compile(r'\s+[—-]\s+', re.IGNORECASE)
+_BREAKDOWN_PREFIX_PATTERN = re.compile(
+    r'^\s*(?:code|код|ошибка|помилка|сообщение|повідомлення|message)\s*[:#-]?\s*',
     re.IGNORECASE,
 )
 
@@ -271,6 +275,22 @@ def _build_language_urls(route_name, route_kwargs=None, query_params=None):
     }
 
 
+def _build_pagination_context(page_obj, query_params=None):
+    query_string_without_page = ''
+    if query_params is not None:
+        query_string_without_page = get_query_string_without_page(query_params)
+    return {
+        'page_numbers': list(
+            page_obj.paginator.get_elided_page_range(
+                number=page_obj.number,
+                on_each_side=1,
+                on_ends=1,
+            )
+        ),
+        'query_string_without_page': query_string_without_page,
+    }
+
+
 def _build_product_detail_language_urls(category, product, query_params=None):
     urls = {}
     for language_code in ('ru', 'ua', 'en'):
@@ -475,7 +495,10 @@ def _get_breakdown_slug(breakdown, lang):
     for candidate in candidates:
         if not candidate:
             continue
-        matches = _ERROR_CODE_PATTERN.finditer(candidate)
+        primary_part = _BREAKDOWN_TITLE_SPLIT_PATTERN.split(candidate.strip(), maxsplit=1)[0].strip()
+        slug_source = _BREAKDOWN_PREFIX_PATTERN.sub('', primary_part).strip() or primary_part
+
+        matches = _ERROR_CODE_PATTERN.finditer(slug_source)
         code_slugs = []
         for match in matches:
             code = match.group(1).replace(' ', '').replace('-', '_')
@@ -483,6 +506,9 @@ def _get_breakdown_slug(breakdown, lang):
             if code_slug and code_slug not in code_slugs:
                 code_slugs.append(code_slug)
         if not code_slugs:
+            text_slug = slugify(slug_source, allow_unicode=True).replace('-', '_')
+            if text_slug:
+                return text_slug
             continue
         return '_'.join(code_slugs)
 
@@ -604,13 +630,13 @@ def section_view(request, section_id, lang='ru'):
     context = {
         'category': category,
         'products': products,
+        'pagination': _build_pagination_context(products, request.GET),
         'products_count': paginator.count,
         'brand_groups': brand_groups,
         'brands': brands,
         'selected_brands': selected_brands,
         'vacuum_filter_groups': vacuum_filter_groups,
         'filter_labels': get_filter_labels(lang),
-        'query_string_without_page': get_query_string_without_page(request.GET),
         'language_urls': _build_language_urls(
             'product_section',
             {'section_id': category.id_name},
@@ -770,6 +796,7 @@ def search_view(request, lang='ru'):
 
     context = {
         'products': products,
+        'pagination': _build_pagination_context(products, request.GET),
         'products_count': products.paginator.count,
         'query': query,
         'language_urls': _build_language_urls('search', query_params=request.GET),
@@ -789,6 +816,7 @@ def articles_index(request, lang='ru'):
 
     context = {
         'articles': articles_page,
+        'pagination': _build_pagination_context(articles_page, request.GET),
         'labels': _get_article_labels(lang),
         'language_urls': _build_language_urls('articles_index'),
         'base_template': 'catalog/site_base.html',

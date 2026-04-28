@@ -235,7 +235,15 @@ img { display: block; max-width: 100%; }
 .site-pagination .page-link {
     border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: rgba(255, 255, 255, 0.9); padding: 12px 16px;
 }
-.site-pagination .active .page-link { background: var(--ink); border-color: var(--ink); }
+.site-pagination .active .page-link {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+}
+.site-pagination .disabled .page-link {
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.7);
+}
 
 .detail-layout { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr); gap: 24px; }
 .detail-side-stack { display: grid; gap: 20px; }
