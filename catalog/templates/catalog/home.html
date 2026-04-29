@@ -137,7 +137,7 @@
         {% for article in featured_articles %}
         <article class="article-card">
             {% if article.primary_image %}
-            <img src="{{ article.primary_image.image.url }}" alt="{{ article.primary_image_alt }}">
+            <img src="{{ article.primary_image.image_url }}" alt="{{ article.primary_image_alt }}">
             {% endif %}
             <div class="article-card-body">
                 <span class="article-date">{% if article.published_at %}{{ article.published_at|date:"d.m.Y" }}{% else %}{{ article.created_at|date:"d.m.Y" }}{% endif %}</span>

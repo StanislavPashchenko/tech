@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import Article, Breakdown, Category, Product
+from .templatetags.article_formatting import render_article_markdown
 from .brand_utils import find_vacuum_brand_name, format_fallback_brand, get_brand_slug
 from .vacuum_filters import (
     apply_section_filters,
@@ -362,6 +363,7 @@ def _prepare_article(article, lang):
     article.title = getattr(article, f'title_{lang}', '') or article.title_ru or article.title_ua or article.title_en
     article.excerpt = getattr(article, f'excerpt_{lang}', '') or ''
     article.content = getattr(article, f'content_{lang}', '') or ''
+    article.content_html = render_article_markdown(article.content)
     article.detail_slug = _get_article_slug(article, lang)
     article.detail_url = reverse('article_detail', args=[lang, article.id, article.detail_slug])
     article.display_images = list(article.images.all())

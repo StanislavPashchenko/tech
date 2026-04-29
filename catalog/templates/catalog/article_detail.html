@@ -37,7 +37,7 @@
             <div class="carousel-inner">
                 {% for image in article.display_images %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                    <img src="{{ image.image.url }}" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
+                    <img src="{{ image.image_url }}" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
                 </div>
                 {% endfor %}
             </div>
@@ -51,7 +51,7 @@
         {% else %}
         {% with image=article.primary_image %}
         <div class="article-cover">
-            <img src="{{ image.image.url }}" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
+            <img src="{{ image.image_url }}" alt="{% if lang == 'ru' %}{{ image.alt_ru|default:article.title }}{% elif lang == 'ua' %}{{ image.alt_ua|default:article.title }}{% else %}{{ image.alt_en|default:article.title }}{% endif %}">
         </div>
         {% endwith %}
         {% endif %}
@@ -59,7 +59,7 @@
     {% endif %}
 
     <div class="article-content">
-        {{ article.content|linebreaks }}
+        {{ article.content_html }}
     </div>
 </article>
 {% endblock %}

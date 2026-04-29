@@ -35,7 +35,7 @@
     <article class="article-feature">
         <div class="article-feature-media">
             {% if featured.primary_image %}
-            <img src="{{ featured.primary_image.image.url }}" alt="{{ featured.primary_image_alt }}">
+            <img src="{{ featured.primary_image.image_url }}" alt="{{ featured.primary_image_alt }}">
             {% else %}
             <div class="article-feature-placeholder">TechGuide</div>
             {% endif %}
@@ -57,7 +57,7 @@
         <article class="article-row">
             <div class="article-row-media">
                 {% if article.primary_image %}
-                <img src="{{ article.primary_image.image.url }}" alt="{{ article.primary_image_alt }}">
+                <img src="{{ article.primary_image.image_url }}" alt="{{ article.primary_image_alt }}">
                 {% else %}
                 <div class="article-row-placeholder">TG</div>
                 {% endif %}

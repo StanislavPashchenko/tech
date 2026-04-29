@@ -1,6 +1,11 @@
+import os
+
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.text import slugify
+
+
+ARTICLE_IMAGE_CLOUDFLARE_PREFIX = 'https://pub-6917b9abd5364cef8cbe869ff198c43a.r2.dev/items/test/'
 
 class Category(models.Model):
     id_name = models.CharField(max_length=100, unique=True)
@@ -164,10 +169,19 @@ class Article(models.Model):
 
 class ArticleImage(models.Model):
     article = models.ForeignKey(Article, related_name='images', on_delete=models.CASCADE, verbose_name='Статья')
+    cloudflare_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        default='',
+        verbose_name='Ссылка Cloudflare (R2)',
+        help_text='Пример: https://pub-...r2.dev/items/test/1.jpg',
+    )
     image = models.FileField(
         upload_to='articles/%Y/%m/',
-        verbose_name='Изображение',
+        verbose_name='Изображение (legacy)',
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'gif'])],
+        blank=True,
+        null=True,
     )
     alt_ru = models.CharField(max_length=255, blank=True, default='', verbose_name='Alt (RU)')
     alt_ua = models.CharField(max_length=255, blank=True, default='', verbose_name='Alt (UA)')
@@ -179,6 +193,29 @@ class ArticleImage(models.Model):
         ordering = ['sort_order', 'id']
         verbose_name = 'Изображение статьи'
         verbose_name_plural = 'Изображения статей'
+
+    @property
+    def image_url(self):
+        if self.cloudflare_url:
+            return self.cloudflare_url
+        if self.image:
+            return self.image.url
+        return ''
+
+    def _build_cloudflare_url_from_legacy_image(self):
+        if not self.image:
+            return ''
+        filename = os.path.basename(self.image.name or '').strip()
+        if not filename:
+            return ''
+        return f'{ARTICLE_IMAGE_CLOUDFLARE_PREFIX}{filename}'
+
+    def save(self, *args, **kwargs):
+        if not self.cloudflare_url:
+            legacy_url = self._build_cloudflare_url_from_legacy_image()
+            if legacy_url:
+                self.cloudflare_url = legacy_url
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'Image #{self.pk or "new"} for {self.article}'

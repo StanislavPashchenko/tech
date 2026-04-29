@@ -203,7 +203,7 @@ class ArticleImageInline(admin.StackedInline):
     model = ArticleImage
     extra = 1
     fields = (
-        'image',
+        'cloudflare_url',
         ('alt_ru', 'alt_ua', 'alt_en'),
         'sort_order',
         'image_preview',
@@ -211,8 +211,8 @@ class ArticleImageInline(admin.StackedInline):
     readonly_fields = ('image_preview',)
 
     def image_preview(self, obj):
-        if obj.pk and obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" width="180" style="object-fit: cover; border: 1px solid #ccc;" />')
+        if obj.pk and obj.image_url:
+            return mark_safe(f'<img src="{obj.image_url}" width="180" style="object-fit: cover; border: 1px solid #ccc;" />')
         return '-'
 
     image_preview.short_description = 'Превью'
