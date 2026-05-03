@@ -2,6 +2,8 @@
 
 {% block title %}{{ breakdown.display_title }} - {{ product.name }}{% endblock %}
 
+{% block meta_description %}{% with first_section=breakdown.display_sections|first %}{% if first_section %}{{ breakdown.display_title }} - {{ first_section.content|striptags|truncatechars:160 }}{% else %}{{ breakdown.display_title }} - {{ product.name }}{% endif %}{% endwith %}{% endblock %}
+
 {% block content %}
 <section class="section-hero">
     <div>

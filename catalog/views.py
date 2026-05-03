@@ -1,7 +1,7 @@
 import re
 
 from django.http import Http404, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.urls import reverse
@@ -61,11 +61,58 @@ _ERROR_CODE_PATTERN = re.compile(
 )
 _BREAKDOWN_TITLE_SPLIT_PATTERN = re.compile(r'\s+[—-]\s+', re.IGNORECASE)
 _BREAKDOWN_PREFIX_PATTERN = re.compile(
-    r'^\s*(?:code|код|ошибка|помилка|сообщение|повідомлення|message)\s*[:#-]?\s*',
+    r'^\s*(?:codes|code|коды|код|сообщения|сообщение|messages|message|ошибка|помилка|повідомлення)\s*[:#-]?\s*',
     re.IGNORECASE,
 )
+_BREAKDOWN_PARENTHETICAL_PATTERN = re.compile(r'\s*\([^)]*\)\s*')
+
+
+def _extract_breakdown_slug_parts(text):
+    if not text:
+        return [], ''
+
+    primary_part = _BREAKDOWN_TITLE_SPLIT_PATTERN.split(text.strip(), maxsplit=1)[0].strip()
+    slug_source = _BREAKDOWN_PREFIX_PATTERN.sub('', primary_part).strip() or primary_part
+
+    code_slugs = []
+    matches = _ERROR_CODE_PATTERN.finditer(slug_source)
+    for match in matches:
+        code = match.group(1).replace(' ', '').replace('-', '_')
+        code_slug = slugify(code, allow_unicode=False).replace('-', '_')
+        if code_slug and code_slug not in code_slugs:
+            code_slugs.append(code_slug)
+
+    semantic_source = _BREAKDOWN_PARENTHETICAL_PATTERN.sub(' ', slug_source)
+    semantic_source = re.sub(r'\s+', ' ', semantic_source).strip(' ,.;:-')
+    semantic_slug = slugify(semantic_source, allow_unicode=True).replace('-', '_')
+
+    return code_slugs, semantic_slug
+
+
+def _get_legacy_breakdown_slug(breakdown, lang):
+    suffix = '' if lang == 'ru' else f'_{lang}'
+    candidates = [
+        getattr(breakdown, f'title{suffix}', ''),
+        breakdown.title,
+        getattr(breakdown, f'description{suffix}', ''),
+        breakdown.description,
+    ]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        code_slugs, semantic_slug = _extract_breakdown_slug_parts(candidate)
+        if not code_slugs:
+            if semantic_slug:
+                return semantic_slug
+            continue
+        return '_'.join(code_slugs)
+
+    title = getattr(breakdown, f'title{suffix}', '') or breakdown.title or f'breakdown-{breakdown.id}'
+    slug = slugify(title, allow_unicode=True).replace('-', '_')
+    return slug or f'breakdown_{breakdown.id}'
 
 def _get_specs_for_language(product, lang):
+    specs_raw = getattr(product, f'specs_{lang}')
     specs_raw = getattr(product, f'specs_{lang}')
     if isinstance(specs_raw, str):
         import json
@@ -514,22 +561,13 @@ def _get_breakdown_slug(breakdown, lang):
     for candidate in candidates:
         if not candidate:
             continue
-        primary_part = _BREAKDOWN_TITLE_SPLIT_PATTERN.split(candidate.strip(), maxsplit=1)[0].strip()
-        slug_source = _BREAKDOWN_PREFIX_PATTERN.sub('', primary_part).strip() or primary_part
-
-        matches = _ERROR_CODE_PATTERN.finditer(slug_source)
-        code_slugs = []
-        for match in matches:
-            code = match.group(1).replace(' ', '').replace('-', '_')
-            code_slug = slugify(code, allow_unicode=False).replace('-', '_')
-            if code_slug and code_slug not in code_slugs:
-                code_slugs.append(code_slug)
-        if not code_slugs:
-            text_slug = slugify(slug_source, allow_unicode=True).replace('-', '_')
-            if text_slug:
-                return text_slug
-            continue
-        return '_'.join(code_slugs)
+        code_slugs, semantic_slug = _extract_breakdown_slug_parts(candidate)
+        if code_slugs and semantic_slug and semantic_slug != '_'.join(code_slugs):
+            return semantic_slug
+        if semantic_slug:
+            return semantic_slug
+        if code_slugs:
+            return '_'.join(code_slugs)
 
     title = getattr(breakdown, f'title{suffix}', '') or breakdown.title or f'breakdown-{breakdown.id}'
     slug = slugify(title, allow_unicode=True).replace('-', '_')
@@ -797,7 +835,23 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
     requested_breakdown_slug = slugify(breakdown_slug, allow_unicode=True).replace('-', '_')
     breakdown = next((item for item in breakdowns if item.detail_slug == requested_breakdown_slug), None)
     if breakdown is None:
+        breakdown = next(
+            (item for item in breakdowns if _get_legacy_breakdown_slug(item, lang) == requested_breakdown_slug),
+            None,
+        )
+    if breakdown is None:
         raise Http404('Breakdown not found')
+
+    canonical_breakdown_slug = _get_breakdown_slug(breakdown, lang)
+    if requested_breakdown_slug != canonical_breakdown_slug:
+        return redirect(
+            'breakdown_detail',
+            lang=lang,
+            section_id=category.id_name,
+            product_slug=selected_product.detail_slug,
+            breakdown_slug=canonical_breakdown_slug,
+            permanent=True,
+        )
 
     language_urls = _build_breakdown_detail_language_urls(category, selected_product, breakdown, request.GET)
     context = {

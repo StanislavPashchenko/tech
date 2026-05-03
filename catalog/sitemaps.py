@@ -1,9 +1,11 @@
+from collections import defaultdict
+
 from django.contrib.sitemaps import Sitemap
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Article, Breakdown, Category, Product
+from .models import Article, Breakdown, BreakdownGroup, Category, Product
 from .views import _get_article_slug, _get_breakdown_slug, _get_product_slug
 
 
@@ -86,40 +88,67 @@ class BreakdownSitemap(Sitemap):
     limit = 1000
 
     def items(self):
-        breakdowns = list(
-            Breakdown.objects.select_related("breakdown_group__category")
-            .order_by("id")
-        )
-        primary_products = {}
-        for product in (
-            Product.objects.select_related("category")
-            .prefetch_related("breakdown_groups")
-            .order_by("id")
-        ):
-            if product.breakdown_group_id and product.breakdown_group_id not in primary_products:
-                primary_products[product.breakdown_group_id] = product
-            for group in product.breakdown_groups.all():
-                if group.id not in primary_products:
-                    primary_products[group.id] = product
-        return [
-            (lang, breakdown, primary_products.get(breakdown.breakdown_group_id))
-            for lang in LANGUAGES
-            for breakdown in breakdowns
-        ]
+        breakdowns_by_group = defaultdict(list)
+        for breakdown in Breakdown.objects.only(
+            "id",
+            "breakdown_group_id",
+            "title",
+            "description",
+            "title_ua",
+            "description_ua",
+            "title_en",
+            "description_en",
+        ).order_by("id"):
+            breakdowns_by_group[breakdown.breakdown_group_id].append(breakdown)
+
+        generic_group_ids_by_category = defaultdict(list)
+        brand_group_ids_by_category_brand = defaultdict(list)
+        for group in BreakdownGroup.objects.order_by("id").values("id", "category_id", "brand_id"):
+            if group["brand_id"] is None:
+                generic_group_ids_by_category[group["category_id"]].append(group["id"])
+            else:
+                brand_group_ids_by_category_brand[(group["category_id"], group["brand_id"])].append(group["id"])
+
+        additional_group_ids_by_product = defaultdict(list)
+        for product_id, breakdown_group_id in Product.breakdown_groups.through.objects.order_by(
+            "product_id",
+            "breakdowngroup_id",
+        ).values_list("product_id", "breakdowngroup_id"):
+            additional_group_ids_by_product[product_id].append(breakdown_group_id)
+
+        items = []
+        for product in Product.objects.select_related("category").only(
+            "id",
+            "category_id",
+            "category__id_name",
+            "brand_id",
+            "breakdown_group_id",
+            "name_ru",
+            "name_ua",
+            "name_en",
+        ).order_by("id"):
+            group_ids = set(generic_group_ids_by_category.get(product.category_id, ()))
+            if product.breakdown_group_id:
+                group_ids.add(product.breakdown_group_id)
+            group_ids.update(additional_group_ids_by_product.get(product.id, ()))
+            if product.brand_id:
+                group_ids.update(
+                    brand_group_ids_by_category_brand.get((product.category_id, product.brand_id), ())
+                )
+
+            for group_id in sorted(group_ids):
+                for breakdown in breakdowns_by_group.get(group_id, ()):
+                    for lang in LANGUAGES:
+                        items.append((lang, product, breakdown))
+        return items
 
     def location(self, item):
-        lang, breakdown, product = item
-        category = breakdown.breakdown_group.category
-        if product is None:
-            return reverse(
-                "product_section",
-                kwargs={"lang": lang, "section_id": category.id_name},
-            )
+        lang, product, breakdown = item
         return reverse(
             "breakdown_detail",
             kwargs={
                 "lang": lang,
-                "section_id": category.id_name,
+                "section_id": product.category.id_name,
                 "product_slug": _get_product_slug(product, lang),
                 "breakdown_slug": _get_breakdown_slug(breakdown, lang),
             },

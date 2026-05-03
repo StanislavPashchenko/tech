@@ -183,6 +183,19 @@ class BreakdownSlugTests(SimpleTestCase):
 
         self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'e1_ee_ef')
 
+    def test_slug_does_not_collapse_distinct_titles_to_model_code_only(self):
+        breakdown = SimpleNamespace(
+            id=4,
+            title='Предупреждение о блокировке трубы (вертикальный беспроводной пылесос AD 7079)',
+            title_ua='',
+            title_en='Tube blockage alert (cordless upright AD 7079)',
+            description='',
+            description_ua='',
+            description_en='',
+        )
+
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'tube_blockage_alert')
+
 
 class ProductAdminFormTests(TestCase):
     def test_brand_queryset_is_limited_by_instance_category(self):
@@ -1485,6 +1498,36 @@ class ProductDetailViewTests(TestCase):
         self.assertEqual(breakdown_detail_response.status_code, 200)
         self.assertContains(breakdown_detail_response, self.breakdown.title)
 
+    def test_breakdown_detail_redirects_legacy_model_code_slug_to_canonical_slug(self):
+        self.breakdown.title = 'Предупреждение о блокировке трубы (вертикальный беспроводной пылесос AD 7079)'
+        self.breakdown.title_ua = 'Попередження про блокування труби (вертикальний бездротовий пилосос AD 7079)'
+        self.breakdown.title_en = 'Tube blockage alert (cordless upright AD 7079)'
+        self.breakdown.save(update_fields=['title', 'title_ua', 'title_en'])
+
+        legacy_url = reverse(
+            'breakdown_detail',
+            args=[
+                'en',
+                self.category.id_name,
+                views._get_product_slug(self.product, 'en'),
+                'ad7079',
+            ],
+        )
+        canonical_url = reverse(
+            'breakdown_detail',
+            args=[
+                'en',
+                self.category.id_name,
+                views._get_product_slug(self.product, 'en'),
+                'tube_blockage_alert',
+            ],
+        )
+
+        response = self.client.get(legacy_url, follow=False)
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], canonical_url)
+
     def test_product_detail_hides_empty_breakdown_fields(self):
         self.breakdown.what_to_check = ''
         self.breakdown.save(update_fields=['what_to_check'])
@@ -1658,6 +1701,21 @@ class SitemapTests(TestCase):
             specs_en={'Volume': '300 l'},
             images=['https://cdn.example.com/fridge.jpg'],
         )
+        self.second_product = Product.objects.create(
+            category=self.category,
+            brand=self.brand,
+            breakdown_group=self.group,
+            name_ru='Тестовый холодильник 2',
+            name_ua='Тестовий холодильник 2',
+            name_en='Test fridge 2',
+            description_ru='Описание 2',
+            description_ua='Опис 2',
+            description_en='Description 2',
+            specs_ru={'Объем': '280 л'},
+            specs_ua={'Обʼєм': '280 л'},
+            specs_en={'Volume': '280 l'},
+            images=['https://cdn.example.com/fridge-2.jpg'],
+        )
         self.breakdown = Breakdown.objects.create(
             breakdown_group=self.group,
             title='Ошибка E1',
@@ -1718,7 +1776,7 @@ class SitemapTests(TestCase):
             ),
         )
 
-    def test_breakdown_sitemap_contains_breakdown_detail_urls(self):
+    def test_breakdown_sitemap_contains_product_specific_breakdown_detail_urls(self):
         response = self.client.get('/sitemap-breakdowns.xml')
 
         self.assertEqual(response.status_code, 200)
@@ -1730,6 +1788,18 @@ class SitemapTests(TestCase):
                     'ru',
                     self.category.id_name,
                     views._get_product_slug(self.product, 'ru'),
+                    views._get_breakdown_slug(self.breakdown, 'ru'),
+                ],
+            ),
+        )
+        self.assertContains(
+            response,
+            reverse(
+                'breakdown_detail',
+                args=[
+                    'ru',
+                    self.category.id_name,
+                    views._get_product_slug(self.second_product, 'ru'),
                     views._get_breakdown_slug(self.breakdown, 'ru'),
                 ],
             ),
@@ -1762,9 +1832,15 @@ class SiteMetaAndHealthTests(TestCase):
             name='TestBrand',
             slug='testbrand',
         )
+        self.group = BreakdownGroup.objects.create(
+            category=self.category,
+            brand=self.brand,
+            name='Холодильники TestBrand',
+        )
         self.product = Product.objects.create(
             category=self.category,
             brand=self.brand,
+            breakdown_group=self.group,
             name_ru='Холодильник Тест',
             description_ru='Подробное описание холодильника',
             specs_ru={'general': {'Тип': 'двухкамерный'}},
@@ -1775,6 +1851,24 @@ class SiteMetaAndHealthTests(TestCase):
             description_en='Detailed fridge description',
             specs_en={'general': {'Type': 'double-door'}},
             images=['https://cdn.example.com/fridge.jpg'],
+        )
+        self.breakdown = Breakdown.objects.create(
+            breakdown_group=self.group,
+            title='Ошибка E1',
+            description='Описание ошибки',
+            possible_causes='Очень подробное описание причины неисправности, которое должно попасть в meta description и затем корректно обрезаться для поискового сниппета.',
+            what_to_check='Что проверить',
+            how_to_fix='Как исправить',
+            title_ua='Помилка E1',
+            description_ua='Опис помилки',
+            possible_causes_ua='Детальний опис причини несправності для сніпета.',
+            what_to_check_ua='Що перевірити',
+            how_to_fix_ua='Як виправити',
+            title_en='Error E1',
+            description_en='Error description',
+            possible_causes_en='A detailed explanation of the breakdown cause that should appear inside the meta description for this page.',
+            what_to_check_en='What to check',
+            how_to_fix_en='How to fix',
         )
 
     def test_healthcheck_endpoint_returns_ok_status(self):
@@ -1807,3 +1901,19 @@ class SiteMetaAndHealthTests(TestCase):
         self.assertContains(response, 'rel="alternate" hreflang="en"', html=False)
         self.assertContains(response, 'catalog/favicon', html=False)
         self.assertContains(response, 'catalog/og-image', html=False)
+
+    def test_breakdown_detail_has_specific_meta_description(self):
+        response = self.client.get(
+            reverse(
+                'breakdown_detail',
+                args=[
+                    'en',
+                    self.category.id_name,
+                    views._get_product_slug(self.product, 'en'),
+                    views._get_breakdown_slug(self.breakdown, 'en'),
+                ],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<meta name="description" content="Error E1 - A detailed explanation of the breakdown cause', html=False)
