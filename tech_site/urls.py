@@ -18,10 +18,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.views.static import serve
+from django.views.generic import RedirectView
 import os
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('robots.txt', RedirectView.as_view(url='/static/robots.txt', permanent=True)),
     path('', include('catalog.urls')),
 ]
 
@@ -36,7 +38,8 @@ def serve_product_folders(request, folder, path):
         raise Http404("Folder not found")
     return serve(request, path, document_root=folder_path)
 
-urlpatterns += [
-    path(f'{settings.MEDIA_URL.lstrip("/")}<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
-    path('<str:folder>/<path:path>', serve_product_folders),
-]
+if settings.DEBUG:
+    urlpatterns += [
+        path(f'{settings.MEDIA_URL.lstrip("/")}<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+        path('<str:folder>/<path:path>', serve_product_folders),
+    ]

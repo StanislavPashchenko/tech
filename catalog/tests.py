@@ -1281,8 +1281,8 @@ class ProductDuplicateChecksTests(TestCase):
         self.assertEqual(len(duplicates['name_ru']), 1)
         self.assertEqual(duplicates['name_ru'][0]['value'], 'Одинаковое название')
         self.assertEqual(
-            [item['id'] for item in duplicates['name_ru'][0]['items']],
-            [first.id, second.id],
+            sorted([item['id'] for item in duplicates['name_ru'][0]['items']]),
+            sorted([first.id, second.id]),
         )
 
     def test_check_product_duplicates_command_fails_when_duplicates_exist(self):

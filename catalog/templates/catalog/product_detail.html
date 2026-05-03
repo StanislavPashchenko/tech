@@ -2,6 +2,11 @@
 
 {% block title %}{{ product.name }} - {{ section_name }}{% endblock %}
 
+{% block meta_description %}{{ product.description|default:product.name|truncatechars:160 }}{% endblock %}
+
+{% block og_title %}{{ product.name }} - {{ section_name }}{% endblock %}
+{% block og_description %}{{ product.description|default:product.name|truncatechars:160 }}{% endblock %}
+
 {% block content %}
 <section class="section-hero">
     <div>

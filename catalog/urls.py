@@ -1,15 +1,15 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('<str:lang>/', views.index, name='index_lang'),
-    path('<str:lang>/search/', views.search_view, name='search'),
-    path('<str:lang>/articles/', views.articles_index, name='articles_index'),
-    path('<str:lang>/articles/<int:article_id>/<str:article_slug>/', views.article_detail_view, name='article_detail'),
-    path('<str:lang>/products/', views.products_index, name='products_index'),
-    path('<str:lang>/products/<str:section_id>/<str:product_slug>/<str:breakdown_slug>/', views.breakdown_detail_view, name='breakdown_detail'),
-    path('<str:lang>/products/<str:section_id>/<str:product_slug>/', views.product_detail_view, name='product_detail'),
-    path('<str:lang>/products/<str:section_id>/', views.section_view, name='product_section'),
-    path('<str:lang>/section/<str:section_id>/', views.section_view, name='section'),
+    re_path(r'^(?P<lang>ru|ua|en)/$', views.index, name='index_lang'),
+    re_path(r'^(?P<lang>ru|ua|en)/search/$', views.search_view, name='search'),
+    re_path(r'^(?P<lang>ru|ua|en)/articles/$', views.articles_index, name='articles_index'),
+    re_path(r'^(?P<lang>ru|ua|en)/articles/(?P<article_id>\d+)/(?P<article_slug>[^/]+)/$', views.article_detail_view, name='article_detail'),
+    re_path(r'^(?P<lang>ru|ua|en)/products/$', views.products_index, name='products_index'),
+    re_path(r'^(?P<lang>ru|ua|en)/products/(?P<section_id>[^/]+)/(?P<product_slug>[^/]+)/(?P<breakdown_slug>[^/]+)/$', views.breakdown_detail_view, name='breakdown_detail'),
+    re_path(r'^(?P<lang>ru|ua|en)/products/(?P<section_id>[^/]+)/(?P<product_slug>[^/]+)/$', views.product_detail_view, name='product_detail'),
+    re_path(r'^(?P<lang>ru|ua|en)/products/(?P<section_id>[^/]+)/$', views.section_view, name='product_section'),
+    re_path(r'^(?P<lang>ru|ua|en)/section/(?P<section_id>[^/]+)/$', views.section_view, name='section'),
 ]

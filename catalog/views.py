@@ -7,7 +7,7 @@ from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
-from .models import Article, Breakdown, Category, Product
+from .models import Article, Breakdown, Category, Product, BreakdownGroup
 from .templatetags.article_formatting import render_article_markdown
 from .brand_utils import find_vacuum_brand_name, format_fallback_brand, get_brand_slug
 from .vacuum_filters import (
@@ -780,14 +780,30 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
     return render(request, 'catalog/breakdown_detail.html', context)
 
 def search_view(request, lang='ru'):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     products_list = Product.objects.none()
     
     if query:
-        products_list = Product.objects.select_related('brand', 'category').filter(
-             Q(**{f'name_{lang}__icontains': query}) |
-             Q(product_folder__icontains=query)
-         ).order_by('id')
+        suffix = '' if lang == 'ru' else f'_{lang}'
+        
+        # 1. Прямой поиск по товарам (имя, папка, описание)
+        product_q = Q(**{f'name_{lang}__icontains': query}) | \
+                    Q(product_folder__icontains=query) | \
+                    Q(**{f'description_{lang}__icontains': query})
+        
+        # 2. Поиск по поломкам (коды ошибок, названия, симптомы)
+        breakdown_q = Q(**{f'title{suffix}__icontains': query}) | \
+                      Q(**{f'possible_causes{suffix}__icontains': query}) | \
+                      Q(**{f'what_to_check{suffix}__icontains': query}) | \
+                      Q(**{f'how_to_fix{suffix}__icontains': query})
+        
+        # Находим группы поломок, которые содержат подходящие поломки
+        matching_groups = BreakdownGroup.objects.filter(breakdowns__in=Breakdown.objects.filter(breakdown_q))
+        
+        # Добавляем товары, связанные с этими группами поломок
+        product_q |= Q(breakdown_group__in=matching_groups) | Q(breakdown_groups__in=matching_groups)
+        
+        products_list = Product.objects.select_related('brand', 'category').filter(product_q).distinct().order_by('id')
     
     paginator = Paginator(products_list, 12)
     page_number = request.GET.get('page')

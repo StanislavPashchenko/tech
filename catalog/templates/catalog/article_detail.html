@@ -2,6 +2,11 @@
 
 {% block title %}{{ article.title }} - TechGuide{% endblock %}
 
+{% block meta_description %}{{ article.excerpt|default:article.title|truncatechars:160 }}{% endblock %}
+
+{% block og_title %}{{ article.title }} - {% endblock %}
+{% block og_description %}{{ article.excerpt|default:article.title|truncatechars:160 }}{% endblock %}
+
 {% block content %}
 <article class="article-shell">
     <nav aria-label="breadcrumb">

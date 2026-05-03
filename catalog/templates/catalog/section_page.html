@@ -2,6 +2,16 @@
 
 {% block title %}{{ section_name }} - TechGuide{% endblock %}
 
+{% block meta_description %}
+{% if lang == 'ru' %}
+    Каталог {{ section_name }} с характеристиками и описанием типичных неисправностей.
+{% elif lang == 'ua' %}
+    Каталог {{ section_name }} з характеристиками та описом типових несправностей.
+{% else %}
+    Catalog of {{ section_name }} with specifications and common repair issues.
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <section class="section-hero">
     <div>
