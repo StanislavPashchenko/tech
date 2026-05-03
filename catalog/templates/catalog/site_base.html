@@ -6,14 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TechGuide Service{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}{% if lang == 'ru' %}Удобный каталог бытовой техники, типовых поломок и полезных инструкций по ремонту.{% elif lang == 'ua' %}Зручний каталог побутової техніки, типових поломок і корисних інструкцій з ремонту.{% else %}A practical catalog of household appliances, common breakdowns, and repair guides.{% endif %}{% endblock %}">
-    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <meta name="robots" content="{% block meta_robots %}{{ meta_robots|default:'index,follow' }}{% endblock %}">
+    <link rel="canonical" href="{{ canonical_url|default:request.build_absolute_uri }}">
+    {% if alternate_urls.ru %}<link rel="alternate" hreflang="ru" href="{{ alternate_urls.ru }}">{% endif %}
+    {% if alternate_urls.ua %}<link rel="alternate" hreflang="uk" href="{{ alternate_urls.ua }}">{% endif %}
+    {% if alternate_urls.en %}<link rel="alternate" hreflang="en" href="{{ alternate_urls.en }}">{% endif %}
+    {% if canonical_url %}<link rel="alternate" hreflang="x-default" href="{{ canonical_url }}">{% endif %}
+    <link rel="icon" type="image/svg+xml" href="{% static 'catalog/favicon.svg' %}">
+    <link rel="apple-touch-icon" href="{% static 'catalog/og-image.png' %}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:url" content="{{ canonical_url|default:request.build_absolute_uri }}">
     <meta property="og:title" content="{% block og_title %}{% endblock %}TechGuide Service">
     <meta property="og:description" content="{% block og_description %}{% endblock %}">
-    <meta property="og:image" content="{% static 'catalog/og-image.jpg' %}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'catalog/og-image.png' %}">
+    <meta property="og:image:alt" content="TechGuide Service">
+    <meta name="twitter:card" content="summary_large_image">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

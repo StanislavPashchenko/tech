@@ -1,0 +1,20 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}
+    {% if lang == 'ua' %}Помилка сервера{% elif lang == 'en' %}Server Error{% else %}Ошибка сервера{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1">500</h1>
+    <h2>
+        {% if lang == 'ua' %}Щось пішло не так{% elif lang == 'en' %}Something went wrong{% else %}Что-то пошло не так{% endif %}
+    </h2>
+    <p class="lead">
+        {% if lang == 'ua' %}Ми вже працюємо над виправленням помилки.{% elif lang == 'en' %}We are already working on fixing this error.{% else %}Мы уже работаем над исправлением ошибки.{% endif %}
+    </p>
+    <a href="/" class="btn btn-primary">
+        {% if lang == 'ua' %}На головну{% elif lang == 'en' %}Go Home{% else %}На главную{% endif %}
+    </a>
+</div>
+{% endblock %}

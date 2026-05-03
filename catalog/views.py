@@ -1,6 +1,6 @@
 import re
 
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
@@ -263,6 +263,23 @@ def _build_url_with_query(url, query_params=None):
     if not query_string:
         return url
     return f'{url}?{query_string}'
+
+
+def _build_absolute_url(request, url):
+    return request.build_absolute_uri(url)
+
+
+def _build_page_meta(request, canonical_url=None, alternate_urls=None, robots=None):
+    canonical_url = canonical_url or request.path
+    absolute_canonical_url = _build_absolute_url(request, canonical_url)
+    absolute_alternate_urls = {}
+    for language_code, url in (alternate_urls or {}).items():
+        absolute_alternate_urls[language_code] = _build_absolute_url(request, url)
+    return {
+        'canonical_url': absolute_canonical_url,
+        'alternate_urls': absolute_alternate_urls,
+        'meta_robots': robots or 'index,follow',
+    }
 
 
 def _build_language_urls(route_name, route_kwargs=None, query_params=None):
@@ -536,11 +553,16 @@ def _build_breakdown_detail_language_urls(category, product, breakdown, query_pa
         for language_code in ('ru', 'ua', 'en')
     }
 
+
+def healthcheck_view(request):
+    return JsonResponse({'status': 'ok'})
+
 def index(request, lang='ru'):
     categories = list(
         Category.objects.annotate(product_count=Count('products'))
         .order_by('-product_count', 'id')
     )
+    language_urls = _build_language_urls('index_lang')
     articles = [
         _prepare_article(article, lang)
         for article in _get_published_articles_queryset()[:3]
@@ -553,8 +575,9 @@ def index(request, lang='ru'):
             'breakdowns': Breakdown.objects.count(),
             'categories': len(categories),
         },
-        'language_urls': _build_language_urls('index_lang'),
+        'language_urls': language_urls,
         'lang': lang,
+        **_build_page_meta(request, canonical_url=language_urls[lang], alternate_urls=language_urls),
         'page_mode': 'home',
     }
     template_path = 'catalog/home.html'
@@ -564,12 +587,14 @@ def products_index(request, lang='ru'):
     categories = Category.objects.annotate(
         product_count=Count('products')
     ).order_by('-product_count', 'id')
+    language_urls = _build_language_urls('products_index')
     context = {
         'categories': categories,
         'featured_articles': [],
         'metrics': None,
-        'language_urls': _build_language_urls('products_index'),
+        'language_urls': language_urls,
         'lang': lang,
+        **_build_page_meta(request, canonical_url=language_urls[lang], alternate_urls=language_urls),
         'page_mode': 'catalog',
     }
     template_path = 'catalog/home.html'
@@ -629,6 +654,11 @@ def section_view(request, section_id, lang='ru'):
         for brand_name, items in brand_groups_map.items()
     ]
 
+    language_urls = _build_language_urls(
+        'product_section',
+        {'section_id': category.id_name},
+        request.GET,
+    )
     context = {
         'category': category,
         'products': products,
@@ -639,13 +669,14 @@ def section_view(request, section_id, lang='ru'):
         'selected_brands': selected_brands,
         'vacuum_filter_groups': vacuum_filter_groups,
         'filter_labels': get_filter_labels(lang),
-        'language_urls': _build_language_urls(
-            'product_section',
-            {'section_id': category.id_name},
-            request.GET,
-        ),
+        'language_urls': language_urls,
         'lang': lang,
         'section_name': _get_section_name(category, lang),
+        **_build_page_meta(
+            request,
+            canonical_url=reverse('product_section', kwargs={'lang': lang, 'section_id': category.id_name}),
+            alternate_urls=language_urls,
+        ),
     }
     template_path = 'catalog/section_page.html'
     return render(request, template_path, context)
@@ -699,15 +730,17 @@ def product_detail_view(request, lang, section_id, product_slug):
                 },
             )
 
+    language_urls = _build_product_detail_language_urls(category, selected_product, request.GET)
     context = {
         'base_template': 'catalog/site_base.html',
         'category': category,
         'section_name': _get_section_name(category, lang),
         'product': selected_product,
         'breakdowns': breakdowns,
-        'language_urls': _build_product_detail_language_urls(category, selected_product, request.GET),
+        'language_urls': language_urls,
         'labels': labels,
         'lang': lang,
+        **_build_page_meta(request, canonical_url=selected_product.detail_url, alternate_urls=language_urls),
     }
     return render(request, 'catalog/product_detail.html', context)
 
@@ -766,6 +799,7 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
     if breakdown is None:
         raise Http404('Breakdown not found')
 
+    language_urls = _build_breakdown_detail_language_urls(category, selected_product, breakdown, request.GET)
     context = {
         'base_template': 'catalog/site_base.html',
         'category': category,
@@ -773,9 +807,10 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
         'product': selected_product,
         'breakdown': breakdown,
         'related_breakdowns': [item for item in breakdowns if item.id != breakdown.id][:6],
-        'language_urls': _build_breakdown_detail_language_urls(category, selected_product, breakdown, request.GET),
+        'language_urls': language_urls,
         'labels': labels,
         'lang': lang,
+        **_build_page_meta(request, canonical_url=breakdown.detail_url, alternate_urls=language_urls),
     }
     return render(request, 'catalog/breakdown_detail.html', context)
 
@@ -812,13 +847,20 @@ def search_view(request, lang='ru'):
     for product in products:
         _prepare_product(product, lang)
 
+    language_urls = _build_language_urls('search', query_params=request.GET)
     context = {
         'products': products,
         'pagination': _build_pagination_context(products, request.GET),
         'products_count': products.paginator.count,
         'query': query,
-        'language_urls': _build_language_urls('search', query_params=request.GET),
+        'language_urls': language_urls,
         'lang': lang,
+        **_build_page_meta(
+            request,
+            canonical_url=reverse('search', kwargs={'lang': lang}),
+            alternate_urls=language_urls,
+            robots='noindex,follow',
+        ),
     }
     template_path = 'catalog/search_results.html'
     return render(request, template_path, context)
@@ -832,13 +874,19 @@ def articles_index(request, lang='ru'):
     articles = [_prepare_article(article, lang) for article in articles_page.object_list]
     articles_page.object_list = articles
 
+    language_urls = _build_language_urls('articles_index')
     context = {
         'articles': articles_page,
         'pagination': _build_pagination_context(articles_page, request.GET),
         'labels': _get_article_labels(lang),
-        'language_urls': _build_language_urls('articles_index'),
+        'language_urls': language_urls,
         'base_template': 'catalog/site_base.html',
         'lang': lang,
+        **_build_page_meta(
+            request,
+            canonical_url=reverse('articles_index', kwargs={'lang': lang}),
+            alternate_urls=language_urls,
+        ),
     }
     return render(request, 'catalog/articles_index.html', context)
 
@@ -853,11 +901,13 @@ def article_detail_view(request, lang, article_id, article_slug):
     if article.detail_slug != article_slug:
         raise Http404('Article not found')
 
+    language_urls = _build_article_detail_language_urls(article)
     context = {
         'article': article,
         'labels': _get_article_labels(lang),
-        'language_urls': _build_article_detail_language_urls(article),
+        'language_urls': language_urls,
         'base_template': 'catalog/site_base.html',
         'lang': lang,
+        **_build_page_meta(request, canonical_url=article.detail_url, alternate_urls=language_urls),
     }
     return render(request, 'catalog/article_detail.html', context)

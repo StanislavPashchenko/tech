@@ -13,7 +13,7 @@ from . import brand_utils
 from . import views
 from .admin import BreakdownGroupAdminForm, ProductAdminForm
 from .duplicate_utils import collect_product_duplicates
-from .models import Breakdown, BreakdownGroup, Category, Product, VacuumBrand
+from .models import Article, Breakdown, BreakdownGroup, Category, Product, VacuumBrand
 
 
 class VacuumBrandUtilsTests(SimpleTestCase):
@@ -1622,3 +1622,188 @@ class ProductDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, common_breakdown.title)
         self.assertContains(response, self.breakdown.title)
+
+
+class SitemapTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            id_name='fridges',
+            name_ru='Холодильники',
+            name_ua='Холодильники',
+            name_en='Fridges',
+            folder='last_fridges',
+        )
+        self.brand = VacuumBrand.objects.create(
+            category=self.category,
+            name='TestBrand',
+            slug='testbrand',
+        )
+        self.group = BreakdownGroup.objects.create(
+            category=self.category,
+            brand=self.brand,
+            name='Холодильники TestBrand',
+        )
+        self.product = Product.objects.create(
+            category=self.category,
+            brand=self.brand,
+            breakdown_group=self.group,
+            name_ru='Тестовый холодильник',
+            name_ua='Тестовий холодильник',
+            name_en='Test fridge',
+            description_ru='Описание',
+            description_ua='Опис',
+            description_en='Description',
+            specs_ru={'Объем': '300 л'},
+            specs_ua={'Обʼєм': '300 л'},
+            specs_en={'Volume': '300 l'},
+            images=['https://cdn.example.com/fridge.jpg'],
+        )
+        self.breakdown = Breakdown.objects.create(
+            breakdown_group=self.group,
+            title='Ошибка E1',
+            description='Описание ошибки',
+            possible_causes='Причина',
+            what_to_check='Что проверить',
+            how_to_fix='Как исправить',
+            title_ua='Помилка E1',
+            description_ua='Опис помилки',
+            possible_causes_ua='Причина',
+            what_to_check_ua='Що перевірити',
+            how_to_fix_ua='Як виправити',
+            title_en='Error E1',
+            description_en='Error description',
+            possible_causes_en='Cause',
+            what_to_check_en='What to check',
+            how_to_fix_en='How to fix',
+        )
+        self.article = Article.objects.create(
+            slug='test-article',
+            title_ru='Тестовая статья',
+            excerpt_ru='Короткое описание статьи',
+            content_ru='Текст статьи',
+            title_ua='Тестова стаття',
+            excerpt_ua='Короткий опис статті',
+            content_ua='Текст статті',
+            title_en='Test article',
+            excerpt_en='Short article description',
+            content_en='Article body',
+        )
+
+    def test_sitemap_index_lists_all_sections(self):
+        response = self.client.get('/sitemap.xml')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '/sitemap-static.xml')
+        self.assertContains(response, '/sitemap-categories.xml')
+        self.assertContains(response, '/sitemap-products.xml')
+        self.assertContains(response, '/sitemap-breakdowns.xml')
+        self.assertContains(response, '/sitemap-articles.xml')
+
+    def test_product_sitemap_contains_language_specific_product_urls(self):
+        response = self.client.get('/sitemap-products.xml')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse(
+                'product_detail',
+                args=['ru', self.category.id_name, views._get_product_slug(self.product, 'ru')],
+            ),
+        )
+        self.assertContains(
+            response,
+            reverse(
+                'product_detail',
+                args=['en', self.category.id_name, views._get_product_slug(self.product, 'en')],
+            ),
+        )
+
+    def test_breakdown_sitemap_contains_breakdown_detail_urls(self):
+        response = self.client.get('/sitemap-breakdowns.xml')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse(
+                'breakdown_detail',
+                args=[
+                    'ru',
+                    self.category.id_name,
+                    views._get_product_slug(self.product, 'ru'),
+                    views._get_breakdown_slug(self.breakdown, 'ru'),
+                ],
+            ),
+        )
+
+    def test_article_sitemap_contains_published_article_urls(self):
+        response = self.client.get('/sitemap-articles.xml')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse(
+                'article_detail',
+                args=['ru', self.article.id, views._get_article_slug(self.article, 'ru')],
+            ),
+        )
+
+
+class SiteMetaAndHealthTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            id_name='fridges',
+            name_ru='Холодильники',
+            name_ua='Холодильники',
+            name_en='Fridges',
+            folder='last_fridges',
+        )
+        self.brand = VacuumBrand.objects.create(
+            category=self.category,
+            name='TestBrand',
+            slug='testbrand',
+        )
+        self.product = Product.objects.create(
+            category=self.category,
+            brand=self.brand,
+            name_ru='Холодильник Тест',
+            description_ru='Подробное описание холодильника',
+            specs_ru={'general': {'Тип': 'двухкамерный'}},
+            name_ua='Холодильник Тест',
+            description_ua='Детальний опис холодильника',
+            specs_ua={'general': {'Тип': 'двокамерний'}},
+            name_en='Test Fridge',
+            description_en='Detailed fridge description',
+            specs_en={'general': {'Type': 'double-door'}},
+            images=['https://cdn.example.com/fridge.jpg'],
+        )
+
+    def test_healthcheck_endpoint_returns_ok_status(self):
+        response = self.client.get(reverse('healthcheck'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'ok'})
+
+    def test_search_page_has_noindex_and_canonical_without_query(self):
+        response = self.client.get(
+            reverse('search', args=['ru']),
+            {'q': 'Холодильник', 'page': 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<meta name="robots" content="noindex,follow">', html=False)
+        self.assertContains(response, '<link rel="canonical" href="http://testserver/ru/search/">', html=False)
+
+    def test_product_detail_includes_hreflang_and_favicon(self):
+        response = self.client.get(
+            reverse(
+                'product_detail',
+                args=['ru', self.category.id_name, views._get_product_slug(self.product, 'ru')],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'rel="alternate" hreflang="ru"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="uk"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="en"', html=False)
+        self.assertContains(response, 'catalog/favicon', html=False)
+        self.assertContains(response, 'catalog/og-image', html=False)

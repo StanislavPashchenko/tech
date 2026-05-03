@@ -1,0 +1,20 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}
+    {% if lang == 'ua' %}Сторінку не знайдено{% elif lang == 'en' %}Page Not Found{% else %}Страница не найдена{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1">404</h1>
+    <h2>
+        {% if lang == 'ua' %}Упс! Сторінку не знайдено{% elif lang == 'en' %}Oops! Page not found{% else %}Упс! Страница не найдена{% endif %}
+    </h2>
+    <p class="lead">
+        {% if lang == 'ua' %}Вибачте, але сторінка, яку ви шукаєте, не існує.{% elif lang == 'en' %}Sorry, but the page you are looking for does not exist.{% else %}Извините, но страница, которую вы ищете, не существует.{% endif %}
+    </p>
+    <a href="/" class="btn btn-primary">
+        {% if lang == 'ua' %}На головну{% elif lang == 'en' %}Go Home{% else %}На главную{% endif %}
+    </a>
+</div>
+{% endblock %}

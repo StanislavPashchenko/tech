@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TechGuide favicon">
+  <rect width="64" height="64" rx="16" fill="#111827"/>
+  <circle cx="32" cy="32" r="22" fill="#2563eb"/>
+  <path d="M22 22h20v8H35v18h-6V30h-7z" fill="#f8fafc"/>
+</svg>

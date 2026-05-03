@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('health/', views.healthcheck_view, name='healthcheck'),
     re_path(r'^(?P<lang>ru|ua|en)/$', views.index, name='index_lang'),
     re_path(r'^(?P<lang>ru|ua|en)/search/$', views.search_view, name='search'),
     re_path(r'^(?P<lang>ru|ua|en)/articles/$', views.articles_index, name='articles_index'),
