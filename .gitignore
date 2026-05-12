@@ -90,6 +90,8 @@ _penpot_*.js
 !/manage.py
 !/db_utils.py
 !/migrate_sqlite_to_postgres.ps1
+!/filters/
+!/filters/**
 !/brands/
 !/brands/**
 !/catalog/

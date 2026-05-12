@@ -1,0 +1,350 @@
+Русский язык:
+Тип
+☐ фильтрационная (капельная)
+☐ рожковая кофеварка
+☐ эспрессо (автоматическая)
+☐ портативная
+☐ капсульная
+☐ комбинированная
+☐ гейзерная
+☐ электротурка
+
+Используемый кофе
+☐ в зернах
+☐ молотый
+☐ капсулы
+☐ чалды
+
+Предустановленные программы
+☐ горячая вода
+☐ эспрессо
+☐ эспрессо макиато
+☐ лунго
+☐ двойной эспрессо
+☐ ристретто
+☐ Flat White
+☐ Long Black
+☐ американо
+☐ кофе крема
+☐ капучино
+☐ латте
+☐ латте макиато
+☐ кофейник (фильтр-кофе)
+☐ горячий шоколад
+☐ горячее молоко
+☐ молочная пена
+☐ своя программа
+☐ профили пользователей
+
+Приготовление молочных напитков
+☐ ручное
+☐ полуавтоматическое
+☐ автоматическое
+☐ автоматическое и ручное
+☐ отсутствует
+
+Регулировки
+☐ степень помола зерна
+☐ крепость напитка
+☐ объем напитка
+☐ температура напитка
+☐ давление пара
+☐ жесткость воды
+
+Функции и возможности
+☐ кофемолка
+☐ керамические жернова
+☐ несколько бункеров
+☐ самоочистка
+☐ фильтр для воды
+☐ резервуар для молока
+☐ регулировка пенки
+☐ повышенная термоизоляция
+☐ подогрев чашек / кофейника
+☐ предварительное смачивание
+☐ управление со смартфона (Bluetooth)
+☐ управление со смартфона (Wi-Fi)
+☐ таймер
+☐ дисплей
+☐ сенсорный дисплей
+☐ сенсорные кнопки
+☐ темпер
+☐ термометр
+☐ манометр
+☐ защита от детей
+
+Совместимые капсулы
+☐ Nespresso Original
+☐ Nespresso Vertuo
+☐ Dolce Gusto
+☐ Tassimo
+☐ Lavazza A Modo Mio
+☐ Lavazza Blue
+☐ L’OR Espresso XXL
+☐ K-Cup
+☐ Caffitaly
+☐ Cafissimo
+
+Порций за цикл (эспрессо)
+☐ 1
+☐ 2
+
+Давление
+☐ ~ 15 бар
+☐ ~ 19 бар
+
+Мощность
+☐ ≤ 750 Вт
+☐ 751 – 1000 Вт
+☐ 1.1 – 1.25 кВт
+☐ 1.26 – 1.5 кВт
+☐ > 1.5 кВт
+
+Емкость для воды
+☐ ≤ 250 мл
+☐ 251 – 500 мл
+☐ 501 – 750 мл
+☐ 751 – 1000 мл
+☐ 1.1 – 1.5 л
+☐ 1.6 – 2 л
+☐ > 2 л
+
+Емкость кофемолки
+☐ ≤ 200 г
+☐ 201 – 250 г
+☐ 251 – 300 г
+☐ > 300 г
+
+Украинский язык:
+Тип
+☐ фільтраційна (крапельна)
+☐ ріжкова кавоварка
+☐ еспресо (автоматична)
+☐ портативна
+☐ капсульна
+☐ комбінована
+☐ гейзерна
+☐ електротурка
+
+Кава
+☐ в зернах
+☐ мелена
+☐ капсули
+☐ чалди
+
+Предустановлені програми
+☐ гаряча вода
+☐ еспресо
+☐ еспресо макіато
+☐ лунго
+☐ подвійний еспресо
+☐ ристретто
+☐ Flat White
+☐ Long Black
+☐ американо
+☐ кава крема
+☐ капучино
+☐ латте
+☐ латте макіато
+☐ кавник (фільтр-кава)
+☐ гарячий шоколад
+☐ гаряче молоко
+☐ молочна піна
+☐ своя програма
+☐ профілі користувачів
+
+Приготування молочних напоїв
+☐ ручне
+☐ напівавтоматичне
+☐ автоматичне
+☐ автоматичне та ручне
+☐ відсутній
+
+Регулювання
+☐ ступінь помолу зерна
+☐ міцність напою
+☐ об'єм напою
+☐ температура напою
+☐ тиск пари
+☐ жорсткість води
+
+Функції та можливості
+☐ кавомолка
+☐ керамічні жорна
+☐ кілька бункерів
+☐ самоочищення
+☐ фільтр для води
+☐ резервуар для молока
+☐ регулювання пінки
+☐ підвищена термоізоляція
+☐ підігрів чашок / кавника
+☐ попереднє змочування
+☐ керування зі смартфона (Bluetooth)
+☐ керування зі смартфона (Wi-Fi)
+☐ таймер
+☐ дисплей
+☐ сенсорний дисплей
+☐ сенсорні кнопки
+☐ темпер
+☐ термометр
+☐ манометр
+☐ захист від дітей
+
+Сумісні капсули
+☐ Nespresso Original
+☐ Nespresso Vertuo
+☐ Dolce Gusto
+☐ Tassimo
+☐ Lavazza A Modo Mio
+☐ Lavazza Blue
+☐ L’OR Espresso XXL
+☐ K-Cup
+☐ Caffitaly
+☐ Cafissimo
+
+Порцій за цикл (еспресо)
+☐ 1
+☐ 2
+
+Тиск
+☐ ~ 15 бар
+☐ ~ 19 бар
+
+Потужність
+☐ ≤ 750 Вт
+☐ 751 – 1000 Вт
+☐ 1.1 – 1.25 кВт
+☐ 1.26 – 1.5 кВт
+☐ > 1.5 кВт
+
+Ємність для води
+☐ ≤ 250 мл
+☐ 251 – 500 мл
+☐ 501 – 750 мл
+☐ 751 – 1000 мл
+☐ 1.1 – 1.5 л
+☐ 1.6 – 2 л
+☐ > 2 л
+
+Об’єм кавомолки
+☐ ≤ 200 г
+☐ 201 – 250 г
+☐ 251 – 300 г
+☐ > 300 г
+
+Английский язык:
+Type
+☐ filtration (drip)
+☐ espresso (portafilter)
+☐ espresso (automatic)
+☐ portable
+☐ capsule
+☐ combined
+☐ moka pot
+☐ turkish electric coffee pot
+
+Used coffee
+☐ in beans
+☐ ground
+☐ capsule
+☐ pods
+
+Preinstalled programs
+☐ hot water
+☐ espresso
+☐ espresso macchiato
+☐ lungo
+☐ double espresso
+☐ ristretto
+☐ Flat White
+☐ Long Black
+☐ americano
+☐ espresso crema
+☐ cappuccino
+☐ latte
+☐ latte macchiato
+☐ coffee pot (filter coffee)
+☐ hot chocolate
+☐ hot milk
+☐ milk foam
+☐ custom programme
+☐ user profiles
+
+Milk drinks preparation
+☐ manual
+☐ semi-automatic
+☐ automatic
+☐ automatic and manual
+☐ no milk frother
+
+Adjustments
+☐ bean grinding degree
+☐ strength of the drink
+☐ drink volume
+☐ drink temperature
+☐ steam pressure
+☐ water hardness
+
+Features
+☐ coffee grinder
+☐ ceramic millstones
+☐ several hoppers
+☐ self-cleaning
+☐ water filter
+☐ milk tank
+☐ foam adjustment
+☐ increased thermal insulation
+☐ cup / coffee pot heating
+☐ prewetting
+☐ control via smartphone (Bluetooth)
+☐ control via smartphone (Wi-Fi)
+☐ timer
+☐ display
+☐ touchscreen
+☐ touch buttons
+☐ tamper
+☐ thermometer
+☐ pressure gauge
+☐ child lock
+
+Compatible capsules
+☐ Nespresso Original
+☐ Nespresso Vertuo
+☐ Dolce Gusto
+☐ Tassimo
+☐ Lavazza A Modo Mio
+☐ Lavazza Blue
+☐ L’OR Espresso XXL
+☐ K-Cup
+☐ Caffitaly
+☐ Cafissimo
+
+Servings per cycle (espresso)
+☐ 1
+☐ 2
+
+Pressure
+☐ ~ 15 bar
+☐ ~ 19 bar
+
+Power
+☐ ≤ 750 W
+☐ 751 – 1000 W
+☐ 1.1 – 1.25 kW
+☐ 1.26 – 1.5 kW
+☐ > 1.5 kW
+
+Water tank
+☐ ≤ 250 ml
+☐ 251 – 500 ml
+☐ 501 – 750 ml
+☐ 751 – 1000 ml
+☐ 1.1 – 1.5 L
+☐ 1.6 – 2 L
+☐ > 2 L
+
+Coffee grinder capacity
+☐ ≤ 200 g
+☐ 201 – 250 g
+☐ 251 – 300 g
+☐ > 300 g
