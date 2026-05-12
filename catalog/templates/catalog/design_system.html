@@ -1,0 +1,177 @@
+{% extends 'catalog/site_base.html' %}
+
+{% block title %}{{ design_labels.title }} - TechGuide{% endblock %}
+
+{% block content %}
+<section class="tg-page-hero">
+    <div class="tg-page-hero-main">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb site-breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ design_labels.title }}</li>
+            </ol>
+        </nav>
+        <span class="tg-kicker">System</span>
+        <h1>{{ design_labels.title }}</h1>
+        <p class="tg-page-hero-lead">{{ design_labels.description }}</p>
+    </div>
+    <div class="tg-page-hero-side">
+        <div class="tg-stat-stack">
+            <article>
+                <strong>1440 / 1024 / 390</strong>
+                <span>{% if lang == 'ru' %}целевые брейкпоинты{% elif lang == 'ua' %}цільові брейкпоінти{% else %}target breakpoints{% endif %}</span>
+            </article>
+            <article>
+                <strong>Auto Layout</strong>
+                <span>{% if lang == 'ru' %}логика layout-системы{% elif lang == 'ua' %}логіка layout-системи{% else %}layout logic{% endif %}</span>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="tg-section">
+    <div class="tg-section-head">
+        <div>
+            <span class="tg-kicker">{% if lang == 'ru' %}Цвета{% elif lang == 'ua' %}Кольори{% else %}Colors{% endif %}</span>
+            <h2>{% if lang == 'ru' %}Палитра и акценты{% elif lang == 'ua' %}Палітра та акценти{% else %}Palette and accents{% endif %}</h2>
+        </div>
+    </div>
+    <div class="tg-token-grid">
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-bg"></span><strong>Canvas / `#f5f7fb`</strong><p>Base surface</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-surface"></span><strong>Surface / `#ffffff`</strong><p>Primary content cards</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-ink"></span><strong>Ink / `#0f172a`</strong><p>High-contrast text</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-blue"></span><strong>Deep Blue / `#2563eb`</strong><p>Primary actions</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-indigo"></span><strong>Indigo / `#4f46e5`</strong><p>Premium accent</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-cyan"></span><strong>Cyan / `#06b6d4`</strong><p>Search, info, glow accents</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-lime"></span><strong>Lime / `#84cc16`</strong><p>Success and active highlights</p></article>
+        <article class="tg-token-card"><span class="tg-swatch tg-swatch-dark"></span><strong>Dark Accent / `#0b1220`</strong><p>Hero and key panels</p></article>
+    </div>
+</section>
+
+<section class="tg-section">
+    <div class="tg-section-head">
+        <div>
+            <span class="tg-kicker">{% if lang == 'ru' %}Типографика{% elif lang == 'ua' %}Типографіка{% else %}Typography{% endif %}</span>
+            <h2>{% if lang == 'ru' %}Шкала текста{% elif lang == 'ua' %}Шкала тексту{% else %}Text scale{% endif %}</h2>
+        </div>
+    </div>
+    <div class="tg-type-scale">
+        <article><span>Hero / 72-84</span><strong>Find appliances, breakdown causes, and repair paths</strong></article>
+        <article><span>H1 / 48-56</span><strong>Catalog page headline</strong></article>
+        <article><span>H2 / 32-40</span><strong>Section heading for structured content</strong></article>
+        <article><span>Body / 16-18</span><p>Readable editorial body for scanning diagnostics, reasons, and how-to actions without crowding the page.</p></article>
+    </div>
+</section>
+
+<section class="tg-section">
+    <div class="tg-section-head">
+        <div>
+            <span class="tg-kicker">{% if lang == 'ru' %}Токены{% elif lang == 'ua' %}Токени{% else %}Tokens{% endif %}</span>
+            <h2>{% if lang == 'ru' %}Spacing, radius и тени{% elif lang == 'ua' %}Spacing, radius і тіні{% else %}Spacing, radius, and shadows{% endif %}</h2>
+        </div>
+    </div>
+    <div class="tg-spec-grid">
+        <article class="tg-token-card"><strong>Spacing</strong><p>`4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 56 / 72`</p></article>
+        <article class="tg-token-card"><strong>Radius</strong><p>`14 / 18 / 24 / 28 / 32 / 40`</p></article>
+        <article class="tg-token-card"><strong>Shadow Soft</strong><p>`0 16px 36px rgba(15, 23, 42, 0.08)`</p></article>
+        <article class="tg-token-card"><strong>Shadow Lifted</strong><p>`0 28px 60px rgba(15, 23, 42, 0.12)`</p></article>
+    </div>
+</section>
+
+<section class="tg-section">
+    <div class="tg-section-head">
+        <div>
+            <span class="tg-kicker">{% if lang == 'ru' %}Компоненты{% elif lang == 'ua' %}Компоненти{% else %}Components{% endif %}</span>
+            <h2>{% if lang == 'ru' %}Кнопки и поля ввода{% elif lang == 'ua' %}Кнопки та поля вводу{% else %}Buttons and inputs{% endif %}</h2>
+        </div>
+    </div>
+    <div class="tg-component-showcase">
+        <div class="tg-component-row">
+            <a href="#" class="tg-btn tg-btn-primary">Primary</a>
+            <a href="#" class="tg-btn tg-btn-secondary">Secondary</a>
+            <a href="#" class="tg-btn tg-btn-ghost">Ghost</a>
+            <a href="#" class="tg-btn tg-btn-primary is-hover-demo">Hover</a>
+            <a href="#" class="tg-btn tg-btn-secondary is-active-demo">Active</a>
+        </div>
+        <div class="tg-state-inputs">
+            <label class="tg-input-demo">
+                <span>Default</span>
+                <input type="text" value="Bosch Serie 6">
+            </label>
+            <label class="tg-input-demo is-focus-demo">
+                <span>Focus</span>
+                <input type="text" value="Ошибка E15">
+            </label>
+        </div>
+    </div>
+</section>
+
+<section class="tg-section">
+    <div class="tg-section-head">
+        <div>
+            <span class="tg-kicker">{% if lang == 'ru' %}Карточки{% elif lang == 'ua' %}Картки{% else %}Cards{% endif %}</span>
+            <h2>{% if lang == 'ru' %}Основные варианты{% elif lang == 'ua' %}Основні варіанти{% else %}Core variants{% endif %}</h2>
+        </div>
+    </div>
+    <div class="tg-card-system-grid">
+        <article class="tg-category-card tg-tone-cyan">
+            <div class="tg-category-head"><span class="tg-category-index">01</span><span class="tg-category-stat">248</span></div>
+            <h3>{% if lang == 'ru' %}Стиральные машины{% elif lang == 'ua' %}Пральні машини{% else %}Washers{% endif %}</h3>
+            <p>{% if lang == 'ru' %}Card variant for category navigation.{% elif lang == 'ua' %}Card variant for category navigation.{% else %}Card variant for category navigation.{% endif %}</p>
+            <div class="tg-category-footer"><strong>Open section</strong><span>Models</span></div>
+        </article>
+
+        <article class="tg-model-card tg-model-card-static">
+            <div class="tg-model-media"><div class="product-media-placeholder">LG</div></div>
+            <div class="tg-model-body">
+                <div class="product-card-meta">
+                    <span class="product-badge">LG</span>
+                    <span class="product-badge product-badge-soft">Dishwashers</span>
+                </div>
+                <h3>LG DFB512FP</h3>
+                <p>Model card variant with image area, short preview, and direct path to diagnostics.</p>
+                <a class="product-link" href="#">Open model card</a>
+            </div>
+        </article>
+
+        <article class="tg-breakdown-card tg-breakdown-card-static">
+            <h3>E15 water leak</h3>
+            <div class="breakdown-section"><strong>Symptoms</strong><div>Machine stops, pumps water, and shows an error.</div></div>
+        </article>
+
+        <article class="tg-article-teaser tg-article-teaser-static">
+            <div class="tg-article-teaser-media"><div class="tg-article-teaser-placeholder">TG</div></div>
+            <div class="tg-article-teaser-body">
+                <span class="tg-article-meta">11.05.2026</span>
+                <h3>How to read dishwasher leak symptoms correctly</h3>
+                <p>Editorial card variant with media, title, summary, and clear CTA.</p>
+                <a href="#">Open article</a>
+            </div>
+        </article>
+    </div>
+</section>
+
+<section class="tg-section">
+    <div class="tg-section-head">
+        <div>
+            <span class="tg-kicker">{% if lang == 'ru' %}Состояния{% elif lang == 'ua' %}Стани{% else %}States{% endif %}</span>
+            <h2>{% if lang == 'ru' %}Hover, active, empty{% elif lang == 'ua' %}Hover, active, empty{% else %}Hover, active, empty{% endif %}</h2>
+        </div>
+    </div>
+    <div class="tg-state-grid">
+        <article class="tg-token-card">
+            <strong>Hover</strong>
+            <p>{% if lang == 'ru' %}Карточки слегка поднимаются и усиливают тень без агрессивной анимации.{% elif lang == 'ua' %}Картки злегка підіймаються та посилюють тінь без агресивної анімації.{% else %}Cards rise slightly and strengthen shadow without aggressive motion.{% endif %}</p>
+        </article>
+        <article class="tg-token-card">
+            <strong>Active</strong>
+            <p>{% if lang == 'ru' %}Активные фильтры, языки и пагинация получают контрастную заливку и четкий контур.{% elif lang == 'ua' %}Активні фільтри, мови та пагінація отримують контрастне заповнення й чіткий контур.{% else %}Active filters, languages, and pagination use strong fills and crisp outlines.{% endif %}</p>
+        </article>
+        <article class="tg-empty-state">
+            <div class="tg-empty-state-icon">0</div>
+            <h2>{% if lang == 'ru' %}Empty state{% elif lang == 'ua' %}Empty state{% else %}Empty state{% endif %}</h2>
+            <p>{% if lang == 'ru' %}Пустые состояния остаются дружелюбными и всегда предлагают следующий шаг.{% elif lang == 'ua' %}Порожні стани залишаються дружніми та завжди пропонують наступний крок.{% else %}Empty states stay friendly and always suggest the next step.{% endif %}</p>
+        </article>
+    </div>
+</section>
+{% endblock %}

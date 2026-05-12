@@ -1917,3 +1917,75 @@ class SiteMetaAndHealthTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<meta name="description" content="Error E1 - A detailed explanation of the breakdown cause', html=False)
+
+
+class HomePageViewTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            id_name='home-fridges',
+            name_ru='Холодильники',
+            name_ua='Холодильники',
+            name_en='Refrigerators',
+            folder='home_fridges',
+        )
+        self.brand = VacuumBrand.objects.create(
+            category=self.category,
+            name='HomeBrand',
+            slug='homebrand',
+        )
+        Product.objects.create(
+            category=self.category,
+            brand=self.brand,
+            name_ru='Тестовый холодильник',
+            name_ua='Тестовий холодильник',
+            name_en='Test Refrigerator',
+            description_ru='Описание',
+            description_ua='Опис',
+            description_en='Description',
+            specs_ru={'general': {'Тип': 'двухкамерный'}},
+            specs_ua={'general': {'Тип': 'двокамерний'}},
+            specs_en={'general': {'Type': 'double-door'}},
+        )
+        self.article = Article.objects.create(
+            slug='home-page-article',
+            title_ru='Статья не для главной',
+            excerpt_ru='Текст статьи',
+            content_ru='Контент статьи',
+            title_ua='Стаття не для головної',
+            excerpt_ua='Текст статті',
+            content_ua='Контент статті',
+            title_en='Article not for homepage',
+            excerpt_en='Article excerpt',
+            content_en='Article body',
+        )
+
+    def test_homepage_renders_new_landing_sections(self):
+        response = self.client.get(reverse('index_lang', args=['ru']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_mode'], 'home')
+        self.assertContains(response, 'TechGuide Service')
+        self.assertContains(response, 'Редакционная главная для диагностики, маршрутов и базы знаний по технике.')
+        self.assertContains(response, 'Главные показатели')
+        self.assertContains(response, 'Три шага от запроса до решения')
+        self.assertContains(response, reverse('products_index', args=['ru']))
+        self.assertContains(response, reverse('product_section', args=['ru', self.category.id_name]))
+
+    def test_homepage_context_builds_metric_cards(self):
+        response = self.client.get(reverse('index_lang', args=['en']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['home_metrics']), 3)
+        self.assertEqual(response.context['home_metrics'][0]['value'], 1)
+        self.assertEqual(
+            response.context['home_metrics'][2]['value'],
+            response.context['metrics']['categories'],
+        )
+        self.assertGreaterEqual(response.context['home_metrics'][2]['value'], 1)
+
+    def test_homepage_does_not_render_featured_articles_stream(self):
+        response = self.client.get(reverse('index_lang', args=['ru']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['featured_articles'], [])
+        self.assertNotContains(response, self.article.title_ru)

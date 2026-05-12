@@ -414,6 +414,243 @@ def _get_article_labels(lang):
     return labels.get(lang, labels['en'])
 
 
+def _get_homepage_content(lang):
+    content = {
+        'ru': {
+            'eyebrow': 'TechGuide Service',
+            'title': 'Редакционная главная для диагностики, маршрутов и базы знаний по технике.',
+            'body': 'Новая главная страница собирает каталог, сервисные сценарии и поиск решений в один чистый SaaS-интерфейс без перегруженной навигации.',
+            'primary_cta': 'Открыть каталог',
+            'secondary_cta': 'Смотреть статьи',
+            'chips': ['Диагностика', 'Service Flows', 'Knowledge Ops'],
+            'snapshot_label': 'Live Snapshot',
+            'snapshot_title': 'Карта сервисных сценариев',
+            'search_label': 'Быстрый поиск',
+            'search_value': 'Модель, ошибка или симптом',
+            'snapshot_stats': [
+                {'value': '94%', 'label': 'покрытие частых сценариев', 'accent': 'lime'},
+                {'value': '32', 'label': 'ключевые категории техники', 'accent': 'cyan'},
+            ],
+            'snapshot_points': [
+                'Каталог, симптомы и маршруты собраны в одном входе.',
+                'Быстрый переход от модели к поломкам и действиям.',
+                'Интерфейс остаётся понятным на десктопе, планшете и мобильном.',
+            ],
+            'metrics_eyebrow': 'Главные показатели',
+            'metrics': [
+                {'key': 'products', 'suffix': 'моделей техники'},
+                {'key': 'breakdowns', 'suffix': 'типовых поломок'},
+                {'key': 'categories', 'suffix': 'категорий в базе'},
+            ],
+            'features_eyebrow': 'Почему это удобно',
+            'features_title': 'Главная чувствуется как editorial + dashboard',
+            'features': [
+                {
+                    'label': 'Playbooks',
+                    'title': 'Быстрый вход в сервисные сценарии',
+                    'body': 'Главная страница ведёт к модели, симптому и следующему действию без лишних слоёв.',
+                    'tone': 'cyan',
+                },
+                {
+                    'label': 'Pathing',
+                    'title': 'Чёткая навигация по маршруту ремонта',
+                    'body': 'Пользователь видит понятный путь от поиска до типовой поломки и решения.',
+                    'tone': 'violet',
+                },
+                {
+                    'label': 'Knowledge',
+                    'title': 'Каталог и база знаний в одном ритме',
+                    'body': 'Контент и структура работают как единая продуктовая главная, а не как набор разрозненных экранов.',
+                    'tone': 'lime',
+                },
+            ],
+            'categories_eyebrow': 'Популярные направления',
+            'categories_title': 'Категории техники',
+            'categories_link': 'Весь каталог',
+            'category_link': 'Открыть раздел',
+            'category_suffix': 'моделей с быстрым входом к характеристикам и типовым поломкам.',
+            'workflow_eyebrow': 'Сервисный ритм',
+            'workflow_title': 'Три шага от запроса до решения',
+            'workflow_steps': [
+                {
+                    'number': '01',
+                    'title': 'Найти точку входа',
+                    'body': 'Откройте нужную категорию, модель или симптом без длинного сценария поиска.',
+                },
+                {
+                    'number': '02',
+                    'title': 'Сузить маршрут',
+                    'body': 'Отфильтруйте бренд, параметры и типовые признаки проблемы.',
+                },
+                {
+                    'number': '03',
+                    'title': 'Перейти к решению',
+                    'body': 'Сразу откройте поломку, диагностику и рекомендуемое действие.',
+                },
+            ],
+            'cta_eyebrow': 'Homepage CTA',
+            'cta_title': 'Одна главная страница вместо набора перегруженных стартовых экранов.',
+            'cta_body': 'Новый landing-паттерн помогает быстрее зайти в каталог, найти нужный сценарий и перейти к содержательному решению.',
+            'cta_action': 'Перейти в каталог',
+        },
+        'ua': {
+            'eyebrow': 'TechGuide Service',
+            'title': 'Редакційна головна для діагностики, маршрутів і бази знань з техніки.',
+            'body': 'Нова головна сторінка збирає каталог, сервісні сценарії та пошук рішень в один чистий SaaS-інтерфейс без перевантаженої навігації.',
+            'primary_cta': 'Відкрити каталог',
+            'secondary_cta': 'Дивитися статті',
+            'chips': ['Діагностика', 'Service Flows', 'Knowledge Ops'],
+            'snapshot_label': 'Live Snapshot',
+            'snapshot_title': 'Карта сервісних сценаріїв',
+            'search_label': 'Швидкий пошук',
+            'search_value': 'Модель, помилка або симптом',
+            'snapshot_stats': [
+                {'value': '94%', 'label': 'покриття частих сценаріїв', 'accent': 'lime'},
+                {'value': '32', 'label': 'ключові категорії техніки', 'accent': 'cyan'},
+            ],
+            'snapshot_points': [
+                'Каталог, симптоми й маршрути зібрані в одній точці входу.',
+                'Швидкий перехід від моделі до поломок і дій.',
+                'Інтерфейс залишається зрозумілим на десктопі, планшеті й мобільному.',
+            ],
+            'metrics_eyebrow': 'Головні показники',
+            'metrics': [
+                {'key': 'products', 'suffix': 'моделей техніки'},
+                {'key': 'breakdowns', 'suffix': 'типових поломок'},
+                {'key': 'categories', 'suffix': 'категорій у базі'},
+            ],
+            'features_eyebrow': 'Чому це зручно',
+            'features_title': 'Головна відчувається як editorial + dashboard',
+            'features': [
+                {
+                    'label': 'Playbooks',
+                    'title': 'Швидкий вхід у сервісні сценарії',
+                    'body': 'Головна сторінка веде до моделі, симптому й наступної дії без зайвих шарів.',
+                    'tone': 'cyan',
+                },
+                {
+                    'label': 'Pathing',
+                    'title': 'Чітка навігація маршрутом ремонту',
+                    'body': 'Користувач бачить зрозумілий шлях від пошуку до типової поломки й рішення.',
+                    'tone': 'violet',
+                },
+                {
+                    'label': 'Knowledge',
+                    'title': 'Каталог і база знань в одному ритмі',
+                    'body': 'Контент і структура працюють як єдина продуктова головна, а не як набір розрізнених екранів.',
+                    'tone': 'lime',
+                },
+            ],
+            'categories_eyebrow': 'Популярні напрями',
+            'categories_title': 'Категорії техніки',
+            'categories_link': 'Увесь каталог',
+            'category_link': 'Відкрити розділ',
+            'category_suffix': 'моделей зі швидким входом до характеристик і типових поломок.',
+            'workflow_eyebrow': 'Сервісний ритм',
+            'workflow_title': 'Три кроки від запиту до рішення',
+            'workflow_steps': [
+                {
+                    'number': '01',
+                    'title': 'Знайти точку входу',
+                    'body': 'Відкрийте потрібну категорію, модель або симптом без довгого сценарію пошуку.',
+                },
+                {
+                    'number': '02',
+                    'title': 'Звузити маршрут',
+                    'body': 'Відфільтруйте бренд, параметри та типові ознаки проблеми.',
+                },
+                {
+                    'number': '03',
+                    'title': 'Перейти до рішення',
+                    'body': 'Одразу відкрийте поломку, діагностику й рекомендовану дію.',
+                },
+            ],
+            'cta_eyebrow': 'Homepage CTA',
+            'cta_title': 'Одна головна сторінка замість набору перевантажених стартових екранів.',
+            'cta_body': 'Новий landing-патерн допомагає швидше зайти в каталог, знайти потрібний сценарій і перейти до змістовного рішення.',
+            'cta_action': 'Перейти до каталогу',
+        },
+        'en': {
+            'eyebrow': 'TechGuide Service',
+            'title': 'An editorial homepage for diagnostics, workflows, and appliance repair knowledge.',
+            'body': 'The new homepage brings catalog entry, service flows, and solution search into one clean SaaS interface without cluttered navigation.',
+            'primary_cta': 'Open catalog',
+            'secondary_cta': 'Read articles',
+            'chips': ['Diagnostics', 'Service Flows', 'Knowledge Ops'],
+            'snapshot_label': 'Live Snapshot',
+            'snapshot_title': 'Service workflow map',
+            'search_label': 'Quick search',
+            'search_value': 'Model, error code, or symptom',
+            'snapshot_stats': [
+                {'value': '94%', 'label': 'coverage of common flows', 'accent': 'lime'},
+                {'value': '32', 'label': 'core appliance categories', 'accent': 'cyan'},
+            ],
+            'snapshot_points': [
+                'Catalog entry, symptoms, and routes are merged into one clear starting point.',
+                'Fast transition from a model to common breakdowns and next actions.',
+                'The interface stays clear across desktop, tablet, and mobile.',
+            ],
+            'metrics_eyebrow': 'Core metrics',
+            'metrics': [
+                {'key': 'products', 'suffix': 'appliance models'},
+                {'key': 'breakdowns', 'suffix': 'common breakdowns'},
+                {'key': 'categories', 'suffix': 'categories in the database'},
+            ],
+            'features_eyebrow': 'Why it works',
+            'features_title': 'The homepage feels editorial and operational at once',
+            'features': [
+                {
+                    'label': 'Playbooks',
+                    'title': 'Fast entry into service scenarios',
+                    'body': 'The homepage leads visitors to a model, a symptom, and the next action without extra layers.',
+                    'tone': 'cyan',
+                },
+                {
+                    'label': 'Pathing',
+                    'title': 'Clear repair route navigation',
+                    'body': 'Visitors see a direct path from search to a common issue and the next practical step.',
+                    'tone': 'violet',
+                },
+                {
+                    'label': 'Knowledge',
+                    'title': 'Catalog and knowledge base in one rhythm',
+                    'body': 'Content and structure work as one product-grade homepage instead of a set of unrelated screens.',
+                    'tone': 'lime',
+                },
+            ],
+            'categories_eyebrow': 'Popular directions',
+            'categories_title': 'Appliance categories',
+            'categories_link': 'Full catalog',
+            'category_link': 'Open section',
+            'category_suffix': 'models with fast access to specs and common breakdowns.',
+            'workflow_eyebrow': 'Service rhythm',
+            'workflow_title': 'Three steps from request to resolution',
+            'workflow_steps': [
+                {
+                    'number': '01',
+                    'title': 'Find the entry point',
+                    'body': 'Open the right category, model, or symptom without a long navigation path.',
+                },
+                {
+                    'number': '02',
+                    'title': 'Narrow the route',
+                    'body': 'Filter by brand, specs, and the most common signs of the issue.',
+                },
+                {
+                    'number': '03',
+                    'title': 'Open the solution',
+                    'body': 'Go straight to the breakdown, diagnostics, and recommended action.',
+                },
+            ],
+            'cta_eyebrow': 'Homepage CTA',
+            'cta_title': 'One homepage instead of a stack of overloaded entry screens.',
+            'cta_body': 'The new landing pattern helps visitors enter the catalog faster, find the right scenario, and move to a meaningful resolution.',
+            'cta_action': 'Open catalog',
+        },
+    }
+    return content.get(lang, content['en'])
+
+
 def _get_published_articles_queryset():
     now = timezone.now()
     return (
@@ -433,11 +670,13 @@ def _prepare_article(article, lang):
     article.display_images = list(article.images.all())
     article.primary_image = article.display_images[0] if article.display_images else None
     if article.primary_image:
+        article.primary_image_url = article.primary_image.image_url
         article.primary_image_alt = (
             getattr(article.primary_image, f'alt_{lang}', '')
             or article.title
         )
     else:
+        article.primary_image_url = ''
         article.primary_image_alt = article.title
     return article
 
@@ -601,18 +840,28 @@ def index(request, lang='ru'):
         .order_by('-product_count', 'id')
     )
     language_urls = _build_language_urls('index_lang')
-    articles = [
-        _prepare_article(article, lang)
-        for article in _get_published_articles_queryset()[:3]
-    ]
+    raw_metrics = {
+        'products': Product.objects.count(),
+        'breakdowns': Breakdown.objects.count(),
+        'categories': len(categories),
+    }
+    home_content = _get_homepage_content(lang)
+    
+    articles_qs = _get_published_articles_queryset()[:4]
+    featured_articles = [_prepare_article(article, lang) for article in articles_qs]
+    
     context = {
         'categories': categories[:6],
-        'featured_articles': articles,
-        'metrics': {
-            'products': Product.objects.count(),
-            'breakdowns': Breakdown.objects.count(),
-            'categories': len(categories),
-        },
+        'featured_articles': featured_articles,
+        'home_content': home_content,
+        'home_metrics': [
+            {
+                'value': raw_metrics[item['key']],
+                'suffix': item['suffix'],
+            }
+            for item in home_content['metrics']
+        ],
+        'metrics': raw_metrics,
         'language_urls': language_urls,
         'lang': lang,
         **_build_page_meta(request, canonical_url=language_urls[lang], alternate_urls=language_urls),
