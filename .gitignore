@@ -24,7 +24,6 @@ staticfiles/
 dumps/
 vacuum_errors/
 coffee_machine_errors/
-filters/
 rclone-v1.73.2-windows-amd64/
 1/
 11/
