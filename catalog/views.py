@@ -651,6 +651,132 @@ def _get_homepage_content(lang):
     return content.get(lang, content['en'])
 
 
+def _get_catalog_page_content(lang):
+    content = {
+        'ru': {
+            'eyebrow': 'Каталог техники',
+            'title': 'Выберите категорию и переходите к моделям, характеристикам и типовым поломкам.',
+            'body': 'Страница продуктов использует тот же визуальный ритм, что и главная: чистый тёмный интерфейс, быстрый вход и понятную навигацию по разделам.',
+            'primary_cta': 'Смотреть категории',
+            'secondary_cta': 'Открыть поиск',
+            'snapshot_label': 'Каталог сейчас',
+            'snapshot_title': 'Крупнейшие разделы по числу моделей',
+            'snapshot_metric_label': 'Всего категорий',
+            'snapshot_note': 'Выберите раздел и быстро переходите от категории к конкретной модели и типовым поломкам.',
+            'metrics_eyebrow': 'Объём каталога',
+            'metrics': [
+                {'key': 'products', 'suffix': 'моделей техники'},
+                {'key': 'breakdowns', 'suffix': 'типовых поломок'},
+                {'key': 'categories', 'suffix': 'категорий в каталоге'},
+            ],
+            'categories_eyebrow': 'Все разделы',
+            'categories_title': 'Категории техники',
+            'category_link': 'Открыть раздел',
+            'category_suffix': 'моделей в каталоге',
+            'workflow_eyebrow': 'Как пользоваться',
+            'workflow_title': 'Быстрый маршрут по каталогу',
+            'workflow_steps': [
+                {
+                    'number': '01',
+                    'title': 'Откройте нужную категорию',
+                    'body': 'Перейдите в раздел техники, который ближе всего к вашему устройству или задаче.',
+                },
+                {
+                    'number': '02',
+                    'title': 'Найдите модель',
+                    'body': 'Используйте список моделей и фильтры, чтобы быстро сузить выдачу по бренду и параметрам.',
+                },
+                {
+                    'number': '03',
+                    'title': 'Изучите поломки и решения',
+                    'body': 'Откройте карточку модели и переходите к типовым неисправностям, диагностике и действиям.',
+                },
+            ],
+        },
+        'ua': {
+            'eyebrow': 'Каталог техніки',
+            'title': 'Оберіть категорію та переходьте до моделей, характеристик і типових поломок.',
+            'body': 'Сторінка продуктів використовує той самий візуальний ритм, що й головна: чистий темний інтерфейс, швидкий вхід і зрозумілу навігацію розділами.',
+            'primary_cta': 'Дивитися категорії',
+            'secondary_cta': 'Відкрити пошук',
+            'snapshot_label': 'Каталог зараз',
+            'snapshot_title': 'Найбільші розділи за кількістю моделей',
+            'snapshot_metric_label': 'Усього категорій',
+            'snapshot_note': 'Оберіть розділ і швидко переходьте від категорії до конкретної моделі та типових поломок.',
+            'metrics_eyebrow': 'Обсяг каталогу',
+            'metrics': [
+                {'key': 'products', 'suffix': 'моделей техніки'},
+                {'key': 'breakdowns', 'suffix': 'типових поломок'},
+                {'key': 'categories', 'suffix': 'категорій у каталозі'},
+            ],
+            'categories_eyebrow': 'Усі розділи',
+            'categories_title': 'Категорії техніки',
+            'category_link': 'Відкрити розділ',
+            'category_suffix': 'моделей у каталозі',
+            'workflow_eyebrow': 'Як користуватися',
+            'workflow_title': 'Швидкий маршрут каталогом',
+            'workflow_steps': [
+                {
+                    'number': '01',
+                    'title': 'Відкрийте потрібну категорію',
+                    'body': 'Перейдіть до розділу техніки, який найбільше відповідає вашому пристрою або задачі.',
+                },
+                {
+                    'number': '02',
+                    'title': 'Знайдіть модель',
+                    'body': 'Використовуйте список моделей і фільтри, щоб швидко звузити видачу за брендом і параметрами.',
+                },
+                {
+                    'number': '03',
+                    'title': 'Перегляньте поломки та рішення',
+                    'body': 'Відкрийте картку моделі та переходьте до типових несправностей, діагностики й дій.',
+                },
+            ],
+        },
+        'en': {
+            'eyebrow': 'Appliance catalog',
+            'title': 'Choose a category and jump to models, specifications, and common breakdowns.',
+            'body': 'The products page now follows the same visual rhythm as the homepage: a clean dark interface, fast entry points, and clear navigation across sections.',
+            'primary_cta': 'Browse categories',
+            'secondary_cta': 'Open search',
+            'snapshot_label': 'Catalog now',
+            'snapshot_title': 'Largest sections by model count',
+            'snapshot_metric_label': 'Total categories',
+            'snapshot_note': 'Pick a section and move quickly from a category to a specific model and its common breakdowns.',
+            'metrics_eyebrow': 'Catalog scale',
+            'metrics': [
+                {'key': 'products', 'suffix': 'appliance models'},
+                {'key': 'breakdowns', 'suffix': 'common breakdowns'},
+                {'key': 'categories', 'suffix': 'catalog categories'},
+            ],
+            'categories_eyebrow': 'All sections',
+            'categories_title': 'Appliance categories',
+            'category_link': 'Open section',
+            'category_suffix': 'models in the catalog',
+            'workflow_eyebrow': 'How it works',
+            'workflow_title': 'A fast route through the catalog',
+            'workflow_steps': [
+                {
+                    'number': '01',
+                    'title': 'Open the right category',
+                    'body': 'Go to the appliance section that best matches your device or task.',
+                },
+                {
+                    'number': '02',
+                    'title': 'Find the model',
+                    'body': 'Use the model list and filters to narrow the results by brand and specs.',
+                },
+                {
+                    'number': '03',
+                    'title': 'Review breakdowns and fixes',
+                    'body': 'Open the model page and move straight to common issues, diagnostics, and actions.',
+                },
+            ],
+        },
+    }
+    return content.get(lang, content['en'])
+
+
 def _get_published_articles_queryset():
     now = timezone.now()
     return (
@@ -871,14 +997,29 @@ def index(request, lang='ru'):
     return render(request, template_path, context)
 
 def products_index(request, lang='ru'):
-    categories = Category.objects.annotate(
+    categories = list(Category.objects.annotate(
         product_count=Count('products')
-    ).order_by('-product_count', 'id')
+    ).order_by('-product_count', 'id'))
     language_urls = _build_language_urls('products_index')
+    raw_metrics = {
+        'products': Product.objects.count(),
+        'breakdowns': Breakdown.objects.count(),
+        'categories': len(categories),
+    }
+    catalog_content = _get_catalog_page_content(lang)
     context = {
         'categories': categories,
         'featured_articles': [],
-        'metrics': None,
+        'metrics': raw_metrics,
+        'catalog_content': catalog_content,
+        'catalog_highlights': [
+            {
+                'id_name': category.id_name,
+                'name': _get_section_name(category, lang),
+                'product_count': category.product_count,
+            }
+            for category in categories[:3]
+        ],
         'language_urls': language_urls,
         'lang': lang,
         **_build_page_meta(request, canonical_url=language_urls[lang], alternate_urls=language_urls),

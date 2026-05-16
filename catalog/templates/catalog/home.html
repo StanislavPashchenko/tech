@@ -136,32 +136,79 @@
 
 </div>
 {% else %}
-<section class="section-block">
-    <div class="section-heading">
-        <div>
-            <span class="eyebrow">{% if lang == 'ru' %}Полный каталог{% elif lang == 'ua' %}Повний каталог{% else %}Full catalog{% endif %}</span>
-            <h2>{% if lang == 'ru' %}Выберите раздел{% elif lang == 'ua' %}Оберіть розділ{% else %}Choose a section{% endif %}</h2>
-        </div>
-    </div>
+<div class="homepage-shell homepage-shell-catalog">
+    <section class="homepage-hero homepage-hero-catalog">
+        <div class="homepage-hero-copy">
+            <span class="homepage-eyebrow">{{ catalog_content.eyebrow }}</span>
+            <h1>{{ catalog_content.title }}</h1>
+            <p class="homepage-lead">{{ catalog_content.body }}</p>
 
-    <div class="category-grid">
-        {% for cat in categories %}
-        <a class="category-card" href="{% url 'product_section' lang cat.id_name %}">
-            <span class="category-icon">{{ forloop.counter }}</span>
-            <h3>{% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}</h3>
-            <p>
-                {% if lang == 'ru' %}
-                    {{ cat.product_count }} моделей, быстрый вход к характеристикам и типовым поломкам.
-                {% elif lang == 'ua' %}
-                    {{ cat.product_count }} моделей, швидкий вхід до характеристик і типових поломок.
-                {% else %}
-                    {{ cat.product_count }} models with fast access to specs and common breakdowns.
-                {% endif %}
-            </p>
-            <span class="category-link">{% if lang == 'ru' %}Открыть раздел{% elif lang == 'ua' %}Відкрити розділ{% else %}Open section{% endif %}</span>
-        </a>
-        {% endfor %}
-    </div>
-</section>
+            <div class="homepage-actions">
+                <a class="homepage-btn-primary" href="#catalog-categories">{{ catalog_content.primary_cta }}</a>
+                <a class="homepage-btn-secondary" href="{% url 'search' lang %}?q=">{{ catalog_content.secondary_cta }}</a>
+            </div>
+        </div>
+
+        <aside class="homepage-snapshot catalog-snapshot">
+            <span class="homepage-card-label">{{ catalog_content.snapshot_label }}</span>
+            <h2>{{ catalog_content.snapshot_title }}</h2>
+            <div class="homepage-search-card" aria-hidden="true">
+                <span>{{ catalog_content.snapshot_metric_label }}</span>
+                <strong>{{ metrics.categories }}</strong>
+            </div>
+            <div class="catalog-highlight-list">
+                {% for item in catalog_highlights %}
+                <a class="catalog-highlight-item" href="{% url 'product_section' lang item.id_name %}">
+                    <div class="catalog-highlight-copy">
+                        <span class="catalog-highlight-index">{{ forloop.counter|stringformat:"02d" }}</span>
+                        <strong>{{ item.name }}</strong>
+                    </div>
+                    <span class="catalog-highlight-value">{{ item.product_count }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="homepage-note-list">
+                <div class="homepage-note-item">{{ catalog_content.snapshot_note }}</div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="homepage-section" id="catalog-categories">
+        <div class="homepage-section-head">
+            <div>
+                <span class="homepage-eyebrow">{{ catalog_content.categories_eyebrow }}</span>
+                <h2>{{ catalog_content.categories_title }}</h2>
+            </div>
+        </div>
+        <div class="homepage-category-grid homepage-category-grid-catalog">
+            {% for cat in categories|slice:":9" %}
+            <a class="homepage-category-card homepage-category-card-catalog" href="{% url 'product_section' lang cat.id_name %}">
+                <span class="homepage-category-index">{{ forloop.counter|stringformat:"02d" }}</span>
+                <h3>{% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}</h3>
+                <p class="homepage-category-meta">{{ cat.product_count }} {{ catalog_content.category_suffix }}</p>
+                <span class="homepage-card-link">{{ catalog_content.category_link }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="homepage-section">
+        <div class="homepage-section-head">
+            <div>
+                <span class="homepage-eyebrow">{{ catalog_content.workflow_eyebrow }}</span>
+                <h2>{{ catalog_content.workflow_title }}</h2>
+            </div>
+        </div>
+        <div class="homepage-workflow">
+            {% for step in catalog_content.workflow_steps %}
+            <article class="homepage-workflow-card">
+                <span class="homepage-workflow-number">{{ step.number }}</span>
+                <h3>{{ step.title }}</h3>
+                <p>{{ step.body }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+</div>
 {% endif %}
 {% endblock %}
