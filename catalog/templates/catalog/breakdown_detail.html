@@ -1,8 +1,135 @@
 {% extends base_template %}
+{% load static %}
 
 {% block title %}{{ breakdown.display_title }} - {{ product.name }}{% endblock %}
 
 {% block meta_description %}{% with first_section=breakdown.display_sections|first %}{% if first_section %}{{ breakdown.display_title }} - {{ first_section.content|striptags|truncatechars:160 }}{% else %}{{ breakdown.display_title }} - {{ product.name }}{% endif %}{% endwith %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalog/home-new.css' %}">
+<link rel="stylesheet" href="{% static 'catalog/section-new.css' %}">
+<style>
+  /* Стили для страницы ошибки - акцент на текущей ошибке */
+  
+  .breakdown-current-card {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.08) 0%, rgba(17, 24, 39, 0.98) 60%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 24px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      0 0 80px rgba(239, 68, 68, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  
+  .breakdown-current-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.8), rgba(245, 158, 11, 0.6), transparent);
+  }
+  
+  .breakdown-current-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .breakdown-current-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  
+  .breakdown-current-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    background: linear-gradient(135deg, #ffffff 0%, #fca5a5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Минималистичный блок поломок */
+  .breakdown-sidebar-compact {
+    background: rgba(17, 24, 39, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  
+  .breakdown-sidebar-compact h3 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 1rem 0;
+  }
+  
+  .breakdown-sidebar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .breakdown-sidebar-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  
+  .breakdown-sidebar-item:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.2);
+    color: #c7d2fe;
+  }
+  
+  .breakdown-sidebar-item.active {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+  
+  /* Новая структура страницы */
+  .breakdown-main-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 2rem;
+    align-items: start;
+  }
+  
+  @media (max-width: 992px) {
+    .breakdown-main-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% endblock extra_css %}
 
 {% block content %}
 <section class="section-hero">
@@ -16,48 +143,56 @@
                 <li class="breadcrumb-item active" aria-current="page">{{ breakdown.display_title }}</li>
             </ol>
         </nav>
-        <span class="eyebrow">{{ labels.brand }}: {{ product.brand_name }}</span>
+        <span class="eyebrow" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;">{{ labels.brand }}: {{ product.brand_name }}</span>
         <h1>{{ breakdown.display_title }}</h1>
         <p>
             {% if lang == 'ru' %}
-                Отдельная страница ошибки для модели {{ product.name }}.
+                Описание проблемы и пошаговое руководство по устранению неисправности.
             {% elif lang == 'ua' %}
-                Окрема сторінка помилки для моделі {{ product.name }}.
+                Опис проблеми та покрокова інструкція з усунення несправності.
             {% else %}
-                Dedicated breakdown page for {{ product.name }}.
+                Problem description and step-by-step troubleshooting guide.
             {% endif %}
         </p>
-        <p><a href="{{ product.detail_url }}">{{ labels.back_to_product }}</a></p>
     </div>
-    <div class="section-summary-card">
-        <strong>{{ product.brand_name }}</strong>
+    <div class="section-summary-card" style="background: linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(17, 24, 39, 0.95) 60%); border-color: rgba(239, 68, 68, 0.2);">
+        <strong style="background: linear-gradient(135deg, #fca5a5 0%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ product.brand_name }}</strong>
         <span>{{ section_name }}</span>
     </div>
 </section>
 
-<section class="detail-layout">
-    <div class="detail-panel detail-summary">
+<div class="breakdown-main-layout">
+    <div class="breakdown-current-card">
+        <div class="breakdown-current-header">
+            <div class="breakdown-current-icon">⚠️</div>
+            <h2 class="breakdown-current-title">{{ breakdown.display_title }}</h2>
+        </div>
+        
         {% for section in breakdown.display_sections %}
-        <section class="detail-copy-section">
-            <h2>{{ section.label }}</h2>
-            <p>{{ section.content|linebreaksbr }}</p>
-        </section>
+        <div class="detail-copy-section" style="border-bottom: 1px solid rgba(239, 68, 68, 0.1); margin-bottom: 1.5rem; padding-bottom: 1.5rem;">
+            <h2 style="font-size: 1.1rem; color: #fca5a5;">{{ section.label }}</h2>
+            <p style="color: #e2e8f0;">{{ section.content|linebreaksbr }}</p>
+        </div>
         {% endfor %}
+        
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <a href="{{ product.detail_url }}" class="product-link" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%); border-color: rgba(99, 102, 241, 0.3);">
+                ← {{ labels.back_to_product }}
+            </a>
+        </div>
     </div>
 
     {% if related_breakdowns %}
-    <div class="detail-side-stack">
-        <div class="detail-side-card">
-            <h2>{{ labels.breakdowns }}</h2>
-            <div class="breakdown-list">
-                {% for item in related_breakdowns %}
-                <article class="breakdown-item">
-                    <h3><a href="{{ item.detail_url }}">{{ item.display_title }}</a></h3>
-                </article>
-                {% endfor %}
-            </div>
+    <div class="breakdown-sidebar-compact">
+        <h3>{{ labels.breakdowns }}</h3>
+        <div class="breakdown-sidebar-list">
+            {% for item in related_breakdowns %}
+            <a href="{{ item.detail_url }}" class="breakdown-sidebar-item {% if item.id == breakdown.id %}active{% endif %}">
+                {{ item.display_title }}
+            </a>
+            {% endfor %}
         </div>
     </div>
     {% endif %}
-</section>
+</div>
 {% endblock %}

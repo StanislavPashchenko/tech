@@ -1,10 +1,10 @@
 <div class="filters-card">
-    <h2 class="h5 mb-3">{{ filter_labels.filters_title }}</h2>
+    <h2>{{ filter_labels.filters_title }}</h2>
     <form method="get" action="{% url 'product_section' lang category.id_name %}">
         <div class="filter-group">
             <div class="d-flex justify-content-between align-items-center">
-                <h3 class="h6 mb-0">{{ filter_labels.brands_title }}</h3>
-                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#brandFilters-{{ lang }}" aria-expanded="false" aria-controls="brandFilters-{{ lang }}">{{ filter_labels.show_label }}</button>
+                <h3>{{ filter_labels.brands_title }}</h3>
+                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#brandFilters-{{ lang }}" aria-expanded="false" aria-controls="brandFilters-{{ lang }}"></button>
             </div>
             <div class="collapse mt-2" id="brandFilters-{{ lang }}">
                 <div class="filter-option-list">
@@ -26,8 +26,8 @@
         {% for filter_group in vacuum_filter_groups %}
         <div class="filter-group">
             <div class="d-flex justify-content-between align-items-center">
-                <h3 class="h6 mb-0">{{ filter_group.title }}</h3>
-                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#{{ filter_group.collapse_id }}" aria-expanded="false" aria-controls="{{ filter_group.collapse_id }}">{{ filter_labels.show_label }}</button>
+                <h3>{{ filter_group.title }}</h3>
+                <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#{{ filter_group.collapse_id }}" aria-expanded="false" aria-controls="{{ filter_group.collapse_id }}"></button>
             </div>
             <div class="collapse mt-2" id="{{ filter_group.collapse_id }}">
                 <div class="filter-option-list">

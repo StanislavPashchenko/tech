@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load static %}
 
 {% block title %}{{ product.name }} - {{ section_name }}{% endblock %}
 
@@ -6,6 +7,11 @@
 
 {% block og_title %}{{ product.name }} - {{ section_name }}{% endblock %}
 {% block og_description %}{{ product.description|default:product.name|truncatechars:160 }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalog/home-new.css' %}">
+<link rel="stylesheet" href="{% static 'catalog/section-new.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="section-hero">
