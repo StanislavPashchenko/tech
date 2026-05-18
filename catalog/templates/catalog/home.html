@@ -1,16 +1,17 @@
 {% extends 'catalog/site_base.html' %}
+{% load static %}
 
 {% block title %}
     {% if page_mode == 'home' %}
-        {% if lang == 'ru' %}TechGuide Service - главная страница сервиса и диагностики{% elif lang == 'ua' %}TechGuide Service - головна сторінка сервісу та діагностики{% else %}TechGuide Service - service and diagnostics homepage{% endif %}
+        {% if lang == 'ru' %}TechGuide — Справочник по ремонту бытовой техники{% elif lang == 'ua' %}TechGuide — Довідник з ремонту побутової техніки{% else %}TechGuide — Household Appliance Repair Guide{% endif %}
     {% else %}
-        {% if lang == 'ru' %}Каталог техники{% elif lang == 'ua' %}Каталог техніки{% else %}Appliance catalog{% endif %}
+        {% if lang == 'ru' %}Каталог техники — TechGuide{% elif lang == 'ua' %}Каталог техніки — TechGuide{% else %}Appliance Catalog — TechGuide{% endif %}
     {% endif %}
 {% endblock %}
 
 {% block meta_description %}
     {% if page_mode == 'home' %}
-        {% if lang == 'ru' %}TechGuide Service: современная главная страница для каталога техники, диагностики, сценариев ремонта и базы знаний.{% elif lang == 'ua' %}TechGuide Service: сучасна головна сторінка для каталогу техніки, діагностики, сценаріїв ремонту та бази знань.{% else %}TechGuide Service: a modern homepage for appliance catalog entry, diagnostics, repair workflows, and knowledge access.{% endif %}
+        {% if lang == 'ru' %}Бесплатный справочник по ремонту стиральных машин, холодильников, пылесосов и другой бытовой техники. Ошибки, поломки, инструкции.{% elif lang == 'ua' %}Безкоштовний довідник з ремонту пральних машин, холодильників, пилососів та іншої побутової техніки. Помилки, поломки, інструкції.{% else %}Free repair guide for washing machines, refrigerators, vacuum cleaners and other household appliances. Error codes, breakdowns, instructions.{% endif %}
     {% else %}
         {{ block.super }}
     {% endif %}
@@ -18,195 +19,353 @@
 
 {% block body_class %}site-shell{% if page_mode == 'home' %} site-shell-home{% endif %}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalog/home-new.css' %}">
+{% endblock %}
+
 {% block content %}
 {% if page_mode == 'home' %}
-<div class="homepage-shell">
-    <section class="homepage-hero">
-        <div class="homepage-hero-copy">
-            <span class="homepage-eyebrow">{{ home_content.eyebrow }}</span>
-            <h1>{{ home_content.title }}</h1>
-            <p class="homepage-lead">{{ home_content.body }}</p>
 
-        </div>
-
-        <aside class="homepage-snapshot">
-            <span class="homepage-card-label">{{ home_content.snapshot_label }}</span>
-            <h2>{{ home_content.snapshot_title }}</h2>
-            <div class="homepage-search-card" aria-hidden="true">
-                <span>{{ home_content.search_label }}</span>
-                <strong>{{ home_content.search_value }}</strong>
-            </div>
-            <div class="homepage-stat-grid">
-                {% for item in home_content.snapshot_stats %}
-                <div class="homepage-stat-card">
-                    <strong>{{ item.value }}</strong>
-                    <span class="is-{{ item.accent }}">{{ item.label }}</span>
-                </div>
-                {% endfor %}
-            </div>
-            <div class="homepage-note-list">
-                {% for item in home_content.snapshot_points %}
-                <div class="homepage-note-item">{{ item }}</div>
-                {% endfor %}
-            </div>
-        </aside>
-    </section>
-
-    <section class="homepage-metrics">
-        <div class="homepage-section-head">
-            <div>
-                <span class="homepage-eyebrow">{{ home_content.metrics_eyebrow }}</span>
-            </div>
-        </div>
-        <div class="homepage-metric-grid">
-            {% for item in home_metrics %}
-            <article class="homepage-metric-card">
-                <strong>{{ item.value }}</strong>
-                <span>{{ item.suffix }}</span>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="homepage-section">
-        <div class="homepage-section-head">
-            <div>
-                <span class="homepage-eyebrow">
-                    {% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}
+<!-- HERO SECTION -->
+<section class="hero-section">
+    <div class="hero-bg">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+        <div class="hero-blob hero-blob-3"></div>
+        <div class="hero-grid"></div>
+    </div>
+    
+    <div class="container hero-content">
+        <h1 class="hero-title">
+            {% if lang == 'ru' %}
+                Ремонтируй технику<br><span class="gradient-text">как профи</span>
+            {% elif lang == 'ua' %}
+                Ремонтуй техніку<br><span class="gradient-text">як профі</span>
+            {% else %}
+                Repair Appliances<br><span class="gradient-text">Like a Pro</span>
+            {% endif %}
+        </h1>
+        
+        <p class="hero-description">
+            {% if lang == 'ru' %}
+                Тысячи инструкций по ремонту стиральных машин, холодильников, пылесосов и другой бытовой техники. 
+                Коды ошибок, типичные поломки и пошаговые руководства.
+            {% elif lang == 'ua' %}
+                Тисячі інструкцій з ремонту пральних машин, холодильників, пилососів та іншої побутової техніки. 
+                Коди помилок, типові поломки та покрокові керівництва.
+            {% else %}
+                Thousands of repair instructions for washing machines, refrigerators, vacuum cleaners and other appliances. 
+                Error codes, common breakdowns and step-by-step guides.
+            {% endif %}
+        </p>
+        
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="hero-stat-value">{{ total_products|default:"50,000+" }}</span>
+                <span class="hero-stat-label">
+                    {% if lang == 'ru' %}моделей{% elif lang == 'ua' %}моделей{% else %}models{% endif %}
                 </span>
-                <h2>
-                    {% if lang == 'ru' %}Последние материалы{% elif lang == 'ua' %}Останні матеріали{% else %}Latest articles{% endif %}
-                </h2>
             </div>
-            <a class="homepage-inline-link" href="{% url 'articles_index' lang %}">
-                {% if lang == 'ru' %}Все статьи{% elif lang == 'ua' %}Усі статті{% else %}All articles{% endif %}
+            <div class="hero-stat">
+                <span class="hero-stat-value">{{ total_breakdowns|default:"10,000+" }}</span>
+                <span class="hero-stat-label">
+                    {% if lang == 'ru' %}поломок{% elif lang == 'ua' %}поломок{% else %}breakdowns{% endif %}
+                </span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-value">{{ total_articles|default:"5,000+" }}</span>
+                <span class="hero-stat-label">
+                    {% if lang == 'ru' %}статей{% elif lang == 'ua' %}статей{% else %}articles{% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <div class="hero-actions">
+            <a href="{% url 'products_index' lang %}" class="btn btn-primary btn-lg">
+                <span class="btn-icon">🔍</span>
+                {% if lang == 'ru' %}Найти модель{% elif lang == 'ua' %}Знайти модель{% else %}Find Model{% endif %}
+            </a>
+            <a href="{% url 'articles_index' lang %}" class="btn btn-outline btn-lg">
+                <span class="btn-icon">📚</span>
+                {% if lang == 'ru' %}Все статьи{% elif lang == 'ua' %}Усі статті{% else %}All Articles{% endif %}
             </a>
         </div>
-        <div class="homepage-feature-grid">
-            {% for article in featured_articles %}
-            <a class="homepage-feature-card homepage-article-card tone-cyan" href="{{ article.detail_url }}">
-                {% if article.primary_image_url %}
-                <div class="homepage-article-media">
-                    <img src="{{ article.primary_image_url }}" alt="{{ article.primary_image_alt|default:article.title }}" class="homepage-article-image">
-                </div>
+    </div>
+</section>
+
+<!-- ARTICLES SECTION -->
+{% if featured_articles %}
+<section class="articles-section">
+    <div class="container">
+        <div class="section-header articles-header">
+            <div class="section-badge">
+                {% if lang == 'ru' %}Полезные материалы{% elif lang == 'ua' %}Корисні матеріали{% else %}Useful Materials{% endif %}
+            </div>
+            <h2 class="section-title">
+                {% if lang == 'ru' %}Последние статьи{% elif lang == 'ua' %}Останні статті{% else %}Latest Articles{% endif %}
+            </h2>
+            <p class="section-subtitle">
+                {% if lang == 'ru' %}
+                    Найдите полезные инструкции, советы по ремонту и разбор типичных неисправностей бытовой техники
+                {% elif lang == 'ua' %}
+                    Знайдіть корисні інструкції, поради з ремонту та розбір типових несправностей побутової техніки
+                {% else %}
+                    Find useful repair guides, tips, and breakdowns of common household appliance issues
                 {% endif %}
-                <h3 class="homepage-article-title">{{ article.title }}</h3>
-            </a>
-            {% endfor %}
+            </p>
         </div>
-    </section>
-
-    <section class="homepage-section">
-        <div class="homepage-section-head">
-            <div>
-                <span class="homepage-eyebrow">{{ home_content.categories_eyebrow }}</span>
-                <h2>{{ home_content.categories_title }}</h2>
-            </div>
-            <a class="homepage-inline-link" href="{% url 'products_index' lang %}">{{ home_content.categories_link }}</a>
-        </div>
-        <div class="homepage-category-grid">
-            {% for cat in categories %}
-            <a class="homepage-category-card" href="{% url 'product_section' lang cat.id_name %}">
-                <span class="homepage-category-index">{{ forloop.counter|stringformat:"02d" }}</span>
-                <h3>{% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}</h3>
-                <p>{{ cat.product_count }} {{ home_content.category_suffix }}</p>
-                <span class="homepage-card-link">{{ home_content.category_link }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="homepage-section">
-        <div class="homepage-section-head">
-            <div>
-                <span class="homepage-eyebrow">{{ home_content.workflow_eyebrow }}</span>
-                <h2>{{ home_content.workflow_title }}</h2>
-            </div>
-        </div>
-        <div class="homepage-workflow">
-            {% for step in home_content.workflow_steps %}
-            <article class="homepage-workflow-card">
-                <span class="homepage-workflow-number">{{ step.number }}</span>
-                <h3>{{ step.title }}</h3>
-                <p>{{ step.body }}</p>
+        
+        <div class="articles-grid">
+            {% for article in featured_articles|slice:":4" %}
+            <article class="article-card">
+                <a href="{{ article.detail_url }}" class="article-card-link">
+                    {% if article.primary_image_url %}
+                    <div class="article-card-image">
+                        <img src="{{ article.primary_image_url }}" alt="{{ article.primary_image_alt|default:article.title }}" loading="lazy">
+                        <div class="article-card-overlay"></div>
+                    </div>
+                    {% else %}
+                    <div class="article-card-image article-card-image-placeholder">
+                        <span class="article-card-icon">📄</span>
+                        <div class="article-card-overlay"></div>
+                    </div>
+                    {% endif %}
+                    <div class="article-card-content">
+                        <h3 class="article-card-title">{{ article.title }}</h3>
+                        <p class="article-card-excerpt">{{ article.excerpt|default:''|truncatechars:100 }}</p>
+                        <div class="article-card-meta">
+                            <span class="article-card-date">{{ article.created_at|date:"d.m.Y" }}</span>
+                            <span class="article-card-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </a>
             </article>
             {% endfor %}
         </div>
-    </section>
 
-</div>
-{% else %}
-<div class="homepage-shell homepage-shell-catalog">
-    <section class="homepage-hero homepage-hero-catalog">
-        <div class="homepage-hero-copy">
-            <span class="homepage-eyebrow">{{ catalog_content.eyebrow }}</span>
-            <h1>{{ catalog_content.title }}</h1>
-            <p class="homepage-lead">{{ catalog_content.body }}</p>
+        <div class="articles-actions">
+            <a href="{% url 'articles_index' lang %}" class="btn btn-outline">
+                {% if lang == 'ru' %}Все статьи{% elif lang == 'ua' %}Усі статті{% else %}All Articles{% endif %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
 
-            <div class="homepage-actions">
-                <a class="homepage-btn-primary" href="#catalog-categories">{{ catalog_content.primary_cta }}</a>
-                <a class="homepage-btn-secondary" href="{% url 'search' lang %}?q=">{{ catalog_content.secondary_cta }}</a>
+<!-- CATEGORIES SECTION -->
+<section class="categories-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                {% if lang == 'ru' %}Категории{% elif lang == 'ua' %}Категорії{% else %}Categories{% endif %}
+            </div>
+            <h2 class="section-title">
+                {% if lang == 'ru' %}Выберите тип техники{% elif lang == 'ua' %}Оберіть тип техніки{% else %}Choose Appliance Type{% endif %}
+            </h2>
+            <p class="section-subtitle">
+                {% if lang == 'ru' %}
+                    Найдите инструкции по ремонту для любой бытовой техники
+                {% elif lang == 'ua' %}
+                    Знайдіть інструкції з ремонту для будь-якої побутової техніки
+                {% else %}
+                    Find repair instructions for any household appliance
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="categories-grid">
+            {% for cat in categories %}
+            <a href="{% url 'product_section' lang cat.id_name %}" class="category-card" style="--card-color: {{ cat.accent_color|default:'#6366f1' }}">
+                <div class="category-icon-wrapper">
+                    <span class="category-icon">{{ cat.icon|default:'🔧' }}</span>
+                </div>
+                <div class="category-content">
+                    <h3 class="category-name">
+                        {% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}
+                    </h3>
+                    <p class="category-count">
+                        {{ cat.product_count }} 
+                        {% if lang == 'ru' %}
+                            {% if cat.product_count == 1 %}модель{% elif cat.product_count < 5 %}модели{% else %}моделей{% endif %}
+                        {% elif lang == 'ua' %}
+                            {% if cat.product_count == 1 %}модель{% elif cat.product_count < 5 %}моделі{% else %}моделей{% endif %}
+                        {% else %}
+                            {% if cat.product_count == 1 %}model{% else %}models{% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="category-arrow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="features-section">
+    <div class="container">
+        <div class="features-grid">
+            <div class="feature-card feature-card-large">
+                <div class="feature-icon">🔍</div>
+                <h3 class="feature-title">
+                    {% if lang == 'ru' %}Поиск по коду ошибки{% elif lang == 'ua' %}Пошук за кодом помилки{% else %}Search by Error Code{% endif %}
+                </h3>
+                <p class="feature-description">
+                    {% if lang == 'ru' %}
+                        Введите код ошибки с дисплея вашей техники и получите подробное описание проблемы и способы её решения.
+                    {% elif lang == 'ua' %}
+                        Введіть код помилки з дисплея вашої техніки та отримайте детальний опис проблеми та способи її вирішення.
+                    {% else %}
+                        Enter the error code from your appliance's display and get a detailed description of the problem and solutions.
+                    {% endif %}
+                </p>
+                <a href="{% url 'search' lang %}" class="feature-link">
+                    {% if lang == 'ru' %}Попробовать{% elif lang == 'ua' %}Спробувати{% else %}Try Now{% endif %}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3 class="feature-title">
+                    {% if lang == 'ru' %}База знаний{% elif lang == 'ua' %}База знань{% else %}Knowledge Base{% endif %}
+                </h3>
+                <p class="feature-description">
+                    {% if lang == 'ru' %}
+                        Тысячи статей по ремонту бытовой техники с пошаговыми инструкциями.
+                    {% elif lang == 'ua' %}
+                        Тисячі статей з ремонту побутової техніки з покроковими інструкціями.
+                    {% else %}
+                        Thousands of appliance repair articles with step-by-step instructions.
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">
+                    {% if lang == 'ru' %}Типовые поломки{% elif lang == 'ua' %}Типові поломки{% else %}Common Issues{% endif %}
+                </h3>
+                <p class="feature-description">
+                    {% if lang == 'ru' %}
+                        Подробные описания частых неисправностей и способы их устранения.
+                    {% elif lang == 'ua' %}
+                        Детальні описи частих несправностей та способи їх усунення.
+                    {% else %}
+                        Detailed descriptions of common malfunctions and how to fix them.
+                    {% endif %}
+                </p>
             </div>
         </div>
+    </div>
+</section>
 
-        <aside class="homepage-snapshot catalog-snapshot">
-            <span class="homepage-card-label">{{ catalog_content.snapshot_label }}</span>
-            <h2>{{ catalog_content.snapshot_title }}</h2>
-            <div class="homepage-search-card" aria-hidden="true">
-                <span>{{ catalog_content.snapshot_metric_label }}</span>
-                <strong>{{ metrics.categories }}</strong>
+<!-- CTA SECTION -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card">
+            <div class="cta-bg">
+                <div class="cta-blob cta-blob-1"></div>
+                <div class="cta-blob cta-blob-2"></div>
             </div>
-            <div class="catalog-highlight-list">
-                {% for item in catalog_highlights %}
-                <a class="catalog-highlight-item" href="{% url 'product_section' lang item.id_name %}">
-                    <div class="catalog-highlight-copy">
-                        <span class="catalog-highlight-index">{{ forloop.counter|stringformat:"02d" }}</span>
-                        <strong>{{ item.name }}</strong>
-                    </div>
-                    <span class="catalog-highlight-value">{{ item.product_count }}</span>
+            <div class="cta-content">
+                <h2 class="cta-title">
+                    {% if lang == 'ru' %}
+                        Не нашли что искали?
+                    {% elif lang == 'ua' %}
+                        Не знайшли те, що шукали?
+                    {% else %}
+                        Didn't find what you were looking for?
+                    {% endif %}
+                </h2>
+                <p class="cta-description">
+                    {% if lang == 'ru' %}
+                        Воспользуйтесь поиском по модели или коду ошибки — мы поможем найти решение проблемы.
+                    {% elif lang == 'ua' %}
+                        Скористайтеся пошуком за моделлю або кодом помилки — ми допоможемо знайти вирішення проблеми.
+                    {% else %}
+                        Use the search by model or error code — we'll help you find a solution.
+                    {% endif %}
+                </p>
+                <div class="cta-actions">
+                    <a href="{% url 'search' lang %}" class="btn btn-white btn-lg">
+                        <span class="btn-icon">🔍</span>
+                        {% if lang == 'ru' %}Поиск{% elif lang == 'ua' %}Пошук{% else %}Search{% endif %}
+                    </a>
+                    <a href="{% url 'products_index' lang %}" class="btn btn-outline-white btn-lg">
+                        {% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% else %}
+<!-- CATALOG MODE -->
+<div class="homepage-shell homepage-shell-catalog">
+    <section class="catalog-hero">
+        <div class="container">
+            <div class="catalog-hero-content">
+                <span class="catalog-hero-badge">{{ catalog_content.eyebrow }}</span>
+                <h1 class="catalog-hero-title">{{ catalog_content.title }}</h1>
+                <p class="catalog-hero-description">{{ catalog_content.body }}</p>
+                <div class="catalog-hero-actions">
+                    <a href="#categories" class="btn btn-primary btn-lg">
+                        {{ catalog_content.primary_cta }}
+                    </a>
+                    <a href="{% url 'search' lang %}" class="btn btn-outline btn-lg">
+                        {{ catalog_content.secondary_cta }}
+                    </a>
+                </div>
+            </div>
+            <div class="catalog-hero-stats">
+                <div class="catalog-stat-card">
+                    <span class="catalog-stat-value">{{ metrics.categories }}</span>
+                    <span class="catalog-stat-label">{{ catalog_content.snapshot_metric_label }}</span>
+                </div>
+                <div class="catalog-highlight-list">
+                    {% for item in catalog_highlights|slice:":3" %}
+                    <a href="{% url 'product_section' lang item.id_name %}" class="catalog-highlight-item">
+                        <span class="catalog-highlight-name">{{ item.name }}</span>
+                        <span class="catalog-highlight-count">{{ item.product_count }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="catalog-categories-section" id="categories">
+        <div class="container">
+            <div class="section-header-center">
+                <span class="section-badge">{{ catalog_content.categories_eyebrow }}</span>
+                <h2 class="section-title">{{ catalog_content.categories_title }}</h2>
+            </div>
+            <div class="catalog-categories-grid">
+                {% for cat in categories %}
+                <a href="{% url 'product_section' lang cat.id_name %}" class="catalog-category-card">
+                    <div class="catalog-category-icon">{{ cat.icon|default:'🔧' }}</div>
+                    <h3 class="catalog-category-name">
+                        {% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}
+                    </h3>
+                    <p class="catalog-category-count">{{ cat.product_count }} {{ catalog_content.category_suffix }}</p>
                 </a>
                 {% endfor %}
             </div>
-            <div class="homepage-note-list">
-                <div class="homepage-note-item">{{ catalog_content.snapshot_note }}</div>
-            </div>
-        </aside>
-    </section>
-
-    <section class="homepage-section" id="catalog-categories">
-        <div class="homepage-section-head">
-            <div>
-                <span class="homepage-eyebrow">{{ catalog_content.categories_eyebrow }}</span>
-                <h2>{{ catalog_content.categories_title }}</h2>
-            </div>
-        </div>
-        <div class="homepage-category-grid homepage-category-grid-catalog">
-            {% for cat in categories|slice:":9" %}
-            <a class="homepage-category-card homepage-category-card-catalog" href="{% url 'product_section' lang cat.id_name %}">
-                <span class="homepage-category-index">{{ forloop.counter|stringformat:"02d" }}</span>
-                <h3>{% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}</h3>
-                <p class="homepage-category-meta">{{ cat.product_count }} {{ catalog_content.category_suffix }}</p>
-                <span class="homepage-card-link">{{ catalog_content.category_link }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="homepage-section">
-        <div class="homepage-section-head">
-            <div>
-                <span class="homepage-eyebrow">{{ catalog_content.workflow_eyebrow }}</span>
-                <h2>{{ catalog_content.workflow_title }}</h2>
-            </div>
-        </div>
-        <div class="homepage-workflow">
-            {% for step in catalog_content.workflow_steps %}
-            <article class="homepage-workflow-card">
-                <span class="homepage-workflow-number">{{ step.number }}</span>
-                <h3>{{ step.title }}</h3>
-                <p>{{ step.body }}</p>
-            </article>
-            {% endfor %}
         </div>
     </section>
 </div>

@@ -20,6 +20,37 @@ from .vacuum_filters import (
     get_section_filter_groups,
 )
 
+# Category icons and colors mapping
+CATEGORY_STYLES = {
+    'washers': {'icon': '👕', 'color': '#3b82f6', 'gradient': 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)'},
+    'wash': {'icon': '👕', 'color': '#3b82f6', 'gradient': 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)'},
+    'cleaners': {'icon': '🧹', 'color': '#8b5cf6', 'gradient': 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)'},
+    'fridges': {'icon': '❄️', 'color': '#06b6d4', 'gradient': 'linear-gradient(135deg, #06b6d4 0%, #10b981 100%)'},
+    'ovens': {'icon': '🍳', 'color': '#f97316', 'gradient': 'linear-gradient(135deg, #f97316 0%, #f59e0b 100%)'},
+    'hobs': {'icon': '🔥', 'color': '#ef4444', 'gradient': 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)'},
+    'dishwashers': {'icon': '🍽️', 'color': '#10b981', 'gradient': 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)'},
+    'microwaves': {'icon': '⚡', 'color': '#eab308', 'gradient': 'linear-gradient(135deg, #eab308 0%, #f97316 100%)'},
+    'coffeemachines': {'icon': '☕', 'color': '#a16207', 'gradient': 'linear-gradient(135deg, #a16207 0%, #ca8a04 100%)'},
+    'cookers': {'icon': '🥘', 'color': '#7c3aed', 'gradient': 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'},
+}
+
+def _get_category_style(category_id_name):
+    """Get icon and color for a category."""
+    return CATEGORY_STYLES.get(category_id_name, {
+        'icon': '🔧',
+        'color': '#6366f1',
+        'gradient': 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+    })
+
+def _enrich_categories_with_styles(categories):
+    """Add icon and color to each category."""
+    for category in categories:
+        style = _get_category_style(category.id_name)
+        category.icon = style['icon']
+        category.accent_color = style['color']
+        category.gradient = style['gradient']
+    return categories
+
 _DYNAMIC_FILTER_MIN_OPTIONS = 2
 _DYNAMIC_FILTER_MAX_OPTIONS = 80
 _DYNAMIC_FILTER_MIN_COVERAGE = 3
@@ -965,6 +996,9 @@ def index(request, lang='ru'):
         Category.objects.annotate(product_count=Count('products'))
         .order_by('-product_count', 'id')
     )
+    # Enrich categories with icons and colors
+    categories = _enrich_categories_with_styles(categories)
+    
     language_urls = _build_language_urls('index_lang')
     raw_metrics = {
         'products': Product.objects.count(),
@@ -973,11 +1007,11 @@ def index(request, lang='ru'):
     }
     home_content = _get_homepage_content(lang)
     
-    articles_qs = _get_published_articles_queryset()[:4]
+    articles_qs = _get_published_articles_queryset()[:6]
     featured_articles = [_prepare_article(article, lang) for article in articles_qs]
     
     context = {
-        'categories': categories[:6],
+        'categories': categories[:9],
         'featured_articles': featured_articles,
         'home_content': home_content,
         'home_metrics': [
@@ -992,6 +1026,10 @@ def index(request, lang='ru'):
         'lang': lang,
         **_build_page_meta(request, canonical_url=language_urls[lang], alternate_urls=language_urls),
         'page_mode': 'home',
+        # Additional stats for the new design
+        'total_products': f"{raw_metrics['products']:,}",
+        'total_breakdowns': f"{raw_metrics['breakdowns']:,}",
+        'total_articles': f"{Article.objects.count():,}",
     }
     template_path = 'catalog/home.html'
     return render(request, template_path, context)
@@ -1000,6 +1038,9 @@ def products_index(request, lang='ru'):
     categories = list(Category.objects.annotate(
         product_count=Count('products')
     ).order_by('-product_count', 'id'))
+    # Enrich categories with icons and colors
+    categories = _enrich_categories_with_styles(categories)
+    
     language_urls = _build_language_urls('products_index')
     raw_metrics = {
         'products': Product.objects.count(),
