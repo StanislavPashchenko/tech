@@ -1049,7 +1049,7 @@ def products_index(request, lang='ru'):
     }
     catalog_content = _get_catalog_page_content(lang)
     context = {
-        'categories': categories,
+        'categories': categories[:9],
         'featured_articles': [],
         'metrics': raw_metrics,
         'catalog_content': catalog_content,

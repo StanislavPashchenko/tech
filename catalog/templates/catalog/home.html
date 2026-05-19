@@ -355,14 +355,23 @@
                 <span class="section-badge">{{ catalog_content.categories_eyebrow }}</span>
                 <h2 class="section-title">{{ catalog_content.categories_title }}</h2>
             </div>
-            <div class="catalog-categories-grid">
+            <div class="categories-grid">
                 {% for cat in categories %}
-                <a href="{% url 'product_section' lang cat.id_name %}" class="catalog-category-card">
-                    <div class="catalog-category-icon">{{ cat.icon|default:'🔧' }}</div>
-                    <h3 class="catalog-category-name">
-                        {% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}
-                    </h3>
-                    <p class="catalog-category-count">{{ cat.product_count }} {{ catalog_content.category_suffix }}</p>
+                <a href="{% url 'product_section' lang cat.id_name %}" class="category-card" style="--card-color: {{ cat.accent_color|default:'#6366f1' }}">
+                    <div class="category-icon-wrapper">
+                        <span class="category-icon">{{ cat.icon|default:'🔧' }}</span>
+                    </div>
+                    <div class="category-content">
+                        <h3 class="category-name">
+                            {% if lang == 'ru' %}{{ cat.name_ru }}{% elif lang == 'ua' %}{{ cat.name_ua }}{% else %}{{ cat.name_en }}{% endif %}
+                        </h3>
+                        <p class="category-count">{{ cat.product_count }} {{ catalog_content.category_suffix }}</p>
+                    </div>
+                    <div class="category-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
                 </a>
                 {% endfor %}
             </div>
