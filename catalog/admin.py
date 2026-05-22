@@ -7,8 +7,7 @@ from django.http import JsonResponse
 from django.urls import path, reverse
 from django.shortcuts import redirect
 from django.template import TemplateDoesNotExist
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html, format_html_join
 
 from .models import Article, ArticleImage, Breakdown, BreakdownGroup, Category, Product, VacuumBrand
 
@@ -98,7 +97,7 @@ class ProductAdminForm(forms.ModelForm):
                 if isinstance(val, str):
                     try:
                         val = json.loads(val)
-                    except:
+                    except (ValueError, TypeError):
                         pass
                 try:
                     formatted_json = json.dumps(val, indent=4, ensure_ascii=False)
@@ -212,7 +211,7 @@ class ArticleImageInline(admin.StackedInline):
 
     def image_preview(self, obj):
         if obj.pk and obj.image_url:
-            return mark_safe(f'<img src="{obj.image_url}" width="180" style="object-fit: cover; border: 1px solid #ccc;" />')
+            return format_html('<img src="{}" width="180" style="object-fit: cover; border: 1px solid #ccc;" />', obj.image_url)
         return '-'
 
     image_preview.short_description = 'Превью'
@@ -302,16 +301,21 @@ class ProductAdmin(admin.ModelAdmin):
 
     def image_preview(self, obj):
         if obj.images and len(obj.images) > 0:
-            return mark_safe(f'<img src="{obj.images[0]}" width="50" height="50" style="object-fit: contain;" />')
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: contain;" />', obj.images[0])
         return "-"
     image_preview.short_description = 'Превью'
 
     def images_list(self, obj):
-        html = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">'
-        for img in obj.images:
-            html += f'<div style="text-align: center;"><img src="{img}" width="150" style="border: 1px solid #ccc;" /><br/><span style="font-size: 10px;">{img}</span></div>'
-        html += '</div>'
-        return mark_safe(html)
+        if not obj.images:
+            return "-"
+        return format_html(
+            '<div style="display: flex; flex-wrap: wrap; gap: 10px;">{}</div>',
+            format_html_join(
+                '',
+                '<div style="text-align: center;"><img src="{}" width="150" style="border: 1px solid #ccc;" /><br/><span style="font-size: 10px;">{}</span></div>',
+                ((img, img) for img in obj.images),
+            ),
+        )
     images_list.short_description = 'Все изображения'
 
 

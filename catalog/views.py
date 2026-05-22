@@ -1,6 +1,7 @@
 import re
+from functools import lru_cache
 
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
@@ -144,12 +145,11 @@ def _get_legacy_breakdown_slug(breakdown, lang):
 
 def _get_specs_for_language(product, lang):
     specs_raw = getattr(product, f'specs_{lang}')
-    specs_raw = getattr(product, f'specs_{lang}')
     if isinstance(specs_raw, str):
         import json
         try:
             return json.loads(specs_raw)
-        except:
+        except (ValueError, TypeError):
             return {}
     return specs_raw or {}
 
@@ -332,6 +332,37 @@ def _get_product_slug(product, lang):
     raw_name = getattr(product, f'name_{lang}', '') or getattr(product, 'name', '') or ''
     product_slug = slugify(raw_name, allow_unicode=True).replace('-', '_')
     return product_slug or f'product_{product.id}'
+
+
+@lru_cache(maxsize=256)
+def _build_product_slug_index(category_id, lang):
+    name_field = f'name_{lang}'
+    index = {}
+    for row in Product.objects.filter(category_id=category_id).values('id', name_field):
+        raw_name = (row.get(name_field) or '').strip()
+        product_id = row['id']
+        slug = slugify(raw_name, allow_unicode=True).replace('-', '_') if raw_name else ''
+        index[slug or f'product_{product_id}'] = product_id
+    return index
+
+
+def _get_product_instance_by_slug(category, lang, product_slug):
+    product_id = _build_product_slug_index(category.id, lang).get(product_slug)
+    if not product_id and product_slug.startswith('product_'):
+        try:
+            product_id = int(product_slug.replace('product_', '', 1))
+        except ValueError:
+            product_id = None
+    if not product_id:
+        raise Http404('Product not found')
+
+    try:
+        return Product.objects.select_related('brand', 'category', 'breakdown_group').prefetch_related('breakdown_groups').get(
+            id=product_id,
+            category=category,
+        )
+    except Product.DoesNotExist:
+        raise Http404('Product not found')
 
 
 def _build_url_with_query(url, query_params=None):
@@ -991,6 +1022,12 @@ def _build_breakdown_detail_language_urls(category, product, breakdown, query_pa
 def healthcheck_view(request):
     return JsonResponse({'status': 'ok'})
 
+
+def robots_txt(request):
+    sitemap_url = request.build_absolute_uri(reverse('sitemap-index'))
+    content = f'User-agent: *\nAllow: /\nSitemap: {sitemap_url}\n'
+    return HttpResponse(content, content_type='text/plain; charset=utf-8')
+
 def index(request, lang='ru'):
     categories = list(
         Category.objects.annotate(product_count=Count('products'))
@@ -1147,23 +1184,16 @@ def section_view(request, section_id, lang='ru'):
             alternate_urls=language_urls,
         ),
     }
-    template_path = 'catalog/section_page.html'
-    return render(request, template_path, context)
+    return render(request, 'catalog/section_page.html', context)
 
 
 def product_detail_view(request, lang, section_id, product_slug):
     category = get_object_or_404(Category, id_name=section_id)
-    selected_product = None
     labels = _get_product_detail_labels(lang)
-
-    for product in Product.objects.select_related('brand', 'category', 'breakdown_group').prefetch_related('breakdown_groups').filter(category=category).order_by('id'):
-        if _get_product_slug(product, lang) != product_slug:
-            continue
-        selected_product = _prepare_product(product, lang)
-        break
-
-    if selected_product is None:
-        raise Http404('Product not found')
+    selected_product = _prepare_product(
+        _get_product_instance_by_slug(category, lang, product_slug),
+        lang,
+    )
 
     breakdowns = []
     breakdown_group_ids = set()
@@ -1216,17 +1246,11 @@ def product_detail_view(request, lang, section_id, product_slug):
 
 def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slug):
     category = get_object_or_404(Category, id_name=section_id)
-    selected_product = None
     labels = _get_product_detail_labels(lang)
-
-    for product in Product.objects.select_related('brand', 'category', 'breakdown_group').prefetch_related('breakdown_groups').filter(category=category).order_by('id'):
-        if _get_product_slug(product, lang) != product_slug:
-            continue
-        selected_product = _prepare_product(product, lang)
-        break
-
-    if selected_product is None:
-        raise Http404('Product not found')
+    selected_product = _prepare_product(
+        _get_product_instance_by_slug(category, lang, product_slug),
+        lang,
+    )
 
     breakdown_group_ids = set()
     if selected_product.breakdown_group_id:
@@ -1353,19 +1377,31 @@ def search_view(request, lang='ru'):
 
 def articles_index(request, lang='ru'):
     articles_qs = _get_published_articles_queryset()
-    paginator = Paginator(articles_qs, 9)
+    paginator = Paginator(articles_qs, 15)
     page_number = request.GET.get('page')
     articles_page = paginator.get_page(page_number)
     articles = [_prepare_article(article, lang) for article in articles_page.object_list]
     articles_page.object_list = articles
+    
+    # Generate page range for pagination
+    page_range = []
+    current_page = articles_page.number
+    total_pages = paginator.num_pages
+    if total_pages <= 7:
+        page_range = list(range(1, total_pages + 1))
+    else:
+        if current_page <= 3:
+            page_range = [1, 2, 3, 4, '...', total_pages]
+        elif current_page >= total_pages - 2:
+            page_range = [1, '...', total_pages - 3, total_pages - 2, total_pages - 1, total_pages]
+        else:
+            page_range = [1, '...', current_page - 1, current_page, current_page + 1, '...', total_pages]
 
-    language_urls = _build_language_urls('articles_index')
+    language_urls = _build_language_urls('articles_index', query_params=request.GET)
     context = {
         'articles': articles_page,
-        'pagination': _build_pagination_context(articles_page, request.GET),
-        'labels': _get_article_labels(lang),
+        'page_range': page_range,
         'language_urls': language_urls,
-        'base_template': 'catalog/site_base.html',
         'lang': lang,
         **_build_page_meta(
             request,
@@ -1373,7 +1409,7 @@ def articles_index(request, lang='ru'):
             alternate_urls=language_urls,
         ),
     }
-    return render(request, 'catalog/articles_index.html', context)
+    return render(request, 'catalog/articles_index_wow.html', context)
 
 
 def article_detail_view(request, lang, article_id, article_slug):

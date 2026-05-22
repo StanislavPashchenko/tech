@@ -40,6 +40,8 @@ def format_fallback_brand(value):
 @lru_cache(maxsize=1)
 def load_vacuum_brand_names():
     file_path = os.path.join(settings.BASE_DIR, 'brands.txt')
+    if not os.path.exists(file_path):
+        return tuple()
     with open(file_path, 'r', encoding='utf-8') as file:
         brand_names = [
             line.replace('☐', '', 1).strip()

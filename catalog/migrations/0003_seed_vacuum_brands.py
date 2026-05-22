@@ -12,6 +12,8 @@ def normalize_brand_key(value):
 
 def load_brand_names():
     file_path = os.path.join(settings.BASE_DIR, 'brands.txt')
+    if not os.path.exists(file_path):
+        return []
     with open(file_path, 'r', encoding='utf-8') as file:
         return [
             line.replace('☐', '', 1).strip()

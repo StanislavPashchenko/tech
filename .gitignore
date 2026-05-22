@@ -37,6 +37,8 @@ tech_restore.sql
 *.bak
 *.md
 
+!catalog/static/robots.txt
+
 # Temporary screenshots and local experiments
 home-*.png
 .playwright-mcp/
@@ -53,6 +55,8 @@ _penpot_*.js
 # Keep only project docs that matter for setup
 !POSTGRES_MIGRATION.md
 !.env.example
+!requirements.txt
+!brands.txt
 
 # Ad-hoc root scripts not needed in repo
 /add_*.py

@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.urls import reverse
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
-from fix_washing_no_dry_from_ek import extract_drying_flag_from_html, repair_payload, specs_need_page_check, update_drying_fields
+from .utils import extract_drying_flag_from_html, repair_payload, specs_need_page_check, update_drying_fields
 
 from . import brand_utils
 from . import views
@@ -1438,6 +1438,36 @@ class ProductDetailViewTests(TestCase):
             response,
             '/en/search/?q=%D0%A5%D0%BE%D0%BB%D0%BE%D0%B4%D0%B8%D0%BB%D1%8C%D0%BD%D0%B8%D0%BA&amp;page=3',
         )
+
+    @override_settings(
+        STORAGES={
+            'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+            'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+        }
+    )
+    def test_articles_index_language_switcher_keeps_query_string(self):
+        article = Article.objects.create(
+            slug='articles-switcher-test',
+            title_ru='Статья для переключателя',
+            excerpt_ru='Короткое описание',
+            content_ru='Текст статьи',
+            title_ua='Стаття для перемикача',
+            excerpt_ua='Короткий опис',
+            content_ua='Текст статті',
+            title_en='Language switcher article',
+            excerpt_en='Short description',
+            content_en='Article body',
+        )
+
+        response = self.client.get(
+            reverse('articles_index', args=['ru']),
+            {'page': 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(article.slug, 'articles-switcher-test')
+        self.assertEqual(response.context['language_urls']['en'], '/en/articles/?page=2')
+        self.assertContains(response, '/en/articles/?page=2')
 
     def test_product_detail_language_switcher_keeps_current_product(self):
         response = self.client.get(

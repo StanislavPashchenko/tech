@@ -1,6 +1,11 @@
 import os
 import json
+import re
+import logging
+from copy import deepcopy
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 def get_products(section_folder, lang='ru'):
     """
@@ -24,8 +29,8 @@ def get_products(section_folder, lang='ru'):
                     with open(json_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         products.append(data)
-                except Exception as e:
-                    print(f"Error reading {json_path}: {e}")
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                    logger.exception("Error reading product JSON: %s", json_path)
                     
     return products
 
@@ -42,3 +47,128 @@ def get_sections():
         {'id': 'microwaves', 'folder': '1/last_Microwaves', 'name': {'ru': 'Микроволновые печи', 'ua': 'Мікрохвильові печі', 'en': 'Microwaves'}},
     ]
     return sections
+
+
+_DRYER_FIELD_CANDIDATES = {
+    'ru': {
+        'dryer': ['Сушилка', 'Сушка'],
+        'drying_capacity': ['Загрузка для сушки', 'Загрузка для сушилки'],
+    },
+    'ua': {
+        'dryer': ['Сушарка', 'Сушка'],
+        'drying_capacity': ['Завантаження для сушіння', 'Завантаження для сушки'],
+    },
+    'en': {
+        'dryer': ['Dryer'],
+        'drying_capacity': ['Drying capacity'],
+    },
+}
+
+_TRUTHY_VALUES = {
+    'ru': {'да', 'есть', 'true', 'yes', '1', '+'},
+    'ua': {'так', 'є', 'true', 'yes', '1', '+'},
+    'en': {'yes', 'true', '1', '+'},
+}
+
+_FALSY_VALUES = {
+    'ru': {'нет', 'false', 'no', '0', '-'},
+    'ua': {'ні', 'нет', 'false', 'no', '0', '-'},
+    'en': {'no', 'false', '0', '-'},
+}
+
+_NO_VALUE_BY_LANG = {
+    'ru': 'нет',
+    'ua': 'ні',
+    'en': 'no',
+}
+
+
+def extract_drying_flag_from_html(html):
+    if not html:
+        return False
+    if re.search(r'class\s*=\s*[\'"][^\'"]*\bprop-y\b', html, flags=re.IGNORECASE):
+        return True
+    if re.search(r'class\s*=\s*[\'"][^\'"]*\bprop-n\b', html, flags=re.IGNORECASE):
+        return False
+    return False
+
+
+def _first_existing_key(mapping, candidates):
+    for key in candidates:
+        if key in mapping:
+            return key
+    return None
+
+
+def _normalize_flag(value):
+    if value is None:
+        return ''
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    return str(value).strip().lower()
+
+
+def _is_truthy_flag(value, lang):
+    normalized = _normalize_flag(value)
+    if not normalized:
+        return False
+    truthy = _TRUTHY_VALUES.get(lang, _TRUTHY_VALUES['en'])
+    falsy = _FALSY_VALUES.get(lang, _FALSY_VALUES['en'])
+    if normalized in falsy:
+        return False
+    if normalized in truthy:
+        return True
+    return normalized not in {'', '0', 'false', 'no'}
+
+
+def specs_need_page_check(specs, lang):
+    if not isinstance(specs, dict):
+        return False
+    general = specs.get('general')
+    if not isinstance(general, dict):
+        return False
+
+    fields = _DRYER_FIELD_CANDIDATES.get(lang, _DRYER_FIELD_CANDIDATES['en'])
+    dryer_key = _first_existing_key(general, fields['dryer'])
+    if not dryer_key:
+        return False
+    if not _is_truthy_flag(general.get(dryer_key), lang):
+        return False
+
+    drying_capacity_key = _first_existing_key(general, fields['drying_capacity'])
+    return not (drying_capacity_key and str(general.get(drying_capacity_key) or '').strip())
+
+
+def update_drying_fields(specs, lang):
+    if not isinstance(specs, dict):
+        return specs
+
+    fixed = deepcopy(specs)
+    general = fixed.get('general')
+    if not isinstance(general, dict):
+        return fixed
+
+    fields = _DRYER_FIELD_CANDIDATES.get(lang, _DRYER_FIELD_CANDIDATES['en'])
+    dryer_key = _first_existing_key(general, fields['dryer'])
+    if not dryer_key:
+        return fixed
+    if not _is_truthy_flag(general.get(dryer_key), lang):
+        return fixed
+
+    general[dryer_key] = _NO_VALUE_BY_LANG.get(lang, _NO_VALUE_BY_LANG['en'])
+    drying_capacity_key = _first_existing_key(general, fields['drying_capacity'])
+    if drying_capacity_key:
+        general.pop(drying_capacity_key, None)
+
+    return fixed
+
+
+def repair_payload(payload, lang):
+    if not isinstance(payload, dict):
+        return payload
+
+    fixed = deepcopy(payload)
+    for key in ('detailed_specs', 'raw_specs'):
+        if isinstance(fixed.get(key), dict):
+            fixed[key] = update_drying_fields(fixed[key], lang)
+    return fixed

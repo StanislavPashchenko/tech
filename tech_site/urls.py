@@ -20,14 +20,14 @@ from django.contrib.sitemaps.views import sitemap as sitemap_view
 from django.urls import path, include
 from django.conf import settings
 from django.views.static import serve
-from django.views.generic import RedirectView
 import os
 
 from catalog.sitemaps import sitemaps
+from catalog import views as catalog_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('robots.txt', RedirectView.as_view(url='/static/robots.txt', permanent=True)),
+    path('robots.txt', catalog_views.robots_txt, name='robots-txt'),
     path(
         'sitemap.xml',
         sitemap_index_view,

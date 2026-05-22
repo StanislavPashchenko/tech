@@ -1,0 +1,721 @@
+{% extends 'catalog/site_base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if lang == 'ru' %}Статьи и руководства — TechGuide{% elif lang == 'ua' %}Статті та керівництва — TechGuide{% else %}Articles & Guides — TechGuide{% endif %}
+{% endblock %}
+
+{% block meta_description %}
+    {% if lang == 'ru' %}Полезные статьи по ремонту бытовой техники: пошаговые инструкции, советы по диагностике и устранению неисправностей.{% elif lang == 'ua' %}Корисні статті з ремонту побутової техніки: покрокові інструкції, поради з діагностики та усунення несправностей.{% else %}Helpful articles on appliance repair: step-by-step guides, diagnostic tips, and troubleshooting advice.{% endif %}
+{% endblock %}
+
+{% block body_class %}site-shell{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'catalog/home-new.css' %}">
+<style>
+/* Modern Articles Page Styles */
+.articles-masthead {
+    position: relative;
+    padding: 100px 0 60px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    overflow: hidden;
+}
+
+.articles-masthead::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+}
+
+.articles-masthead::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+    animation: pulse 10s ease-in-out infinite reverse;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.articles-masthead-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+}
+
+.articles-masthead-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    color: #818cf8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.articles-masthead-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+}
+
+.articles-masthead-title span {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.articles-masthead-description {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: #94a3b8;
+    max-width: 600px;
+}
+
+/* Stats Bar */
+.articles-stats {
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border-top: 1px solid rgba(99, 102, 241, 0.1);
+    padding: 24px 0;
+}
+
+.articles-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+}
+
+.articles-stat {
+    text-align: center;
+    position: relative;
+}
+
+.articles-stat:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+}
+
+.articles-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.articles-stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Articles Content */
+.articles-content {
+    padding: 80px 0;
+    background: #0f172a;
+}
+
+.articles-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.articles-results {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.articles-results strong {
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+/* Grid Layout */
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+}
+
+/* Article Card */
+.article-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+}
+
+.article-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 25px 50px rgba(99, 102, 241, 0.2);
+}
+
+.article-card-image {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+}
+
+.article-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.article-card:hover .article-card-image img {
+    transform: scale(1.08);
+}
+
+.article-card-image-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 4rem;
+}
+
+.article-card-image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%);
+}
+
+.article-card-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.article-card-content {
+    padding: 24px;
+}
+
+.article-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.article-card-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.article-card-date svg {
+    opacity: 0.6;
+}
+
+.article-card-category {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 100px;
+    color: #818cf8;
+    font-weight: 600;
+}
+
+.article-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #f8fafc;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.3s ease;
+}
+
+.article-card:hover .article-card-title {
+    color: #818cf8;
+}
+
+.article-card-excerpt {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #94a3b8;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.article-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.article-card-cta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #818cf8;
+    transition: all 0.3s ease;
+}
+
+.article-card:hover .article-card-cta {
+    color: #6366f1;
+    gap: 12px;
+}
+
+.article-card-link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+/* Empty State */
+.articles-empty {
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.articles-empty-icon {
+    font-size: 5rem;
+    margin-bottom: 24px;
+    opacity: 0.5;
+}
+
+.articles-empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 12px;
+}
+
+.articles-empty-text {
+    font-size: 1rem;
+    color: #64748b;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Pagination */
+.articles-pagination {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.pagination-info {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+.pagination-info strong {
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pagination-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+    color: #f8fafc;
+}
+
+.pagination-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.pagination-number:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: #f8fafc;
+}
+
+.pagination-number.active {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: transparent;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.pagination-ellipsis {
+    color: #64748b;
+    padding: 0 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .articles-masthead {
+        padding: 60px 0 40px;
+    }
+    
+    .articles-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .articles-stat:not(:last-child)::after {
+        display: none;
+    }
+    
+    .articles-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .pagination-controls {
+        gap: 4px;
+    }
+    
+    .pagination-number {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 8px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Masthead -->
+<section class="articles-masthead">
+    <div class="container articles-masthead-content">
+        <div class="articles-masthead-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            {% if lang == 'ru' %}База знаний{% elif lang == 'ua' %}База знань{% else %}Knowledge Base{% endif %}
+        </div>
+        <h1 class="articles-masthead-title">
+            {% if lang == 'ru' %}
+                Полезные <span>статьи</span><br>и руководства
+            {% elif lang == 'ua' %}
+                Корисні <span>статті</span><br>та керівництва
+            {% else %}
+                Helpful <span>articles</span><br>& guides
+            {% endif %}
+        </h1>
+        <p class="articles-masthead-description">
+            {% if lang == 'ru' %}
+                Материалы по диагностике, уходу и типовым поломкам с акцентом на понятные действия
+            {% elif lang == 'ua' %}
+                Матеріали з діагностики, догляду та типових поломок з акцентом на зрозумілі дії
+            {% else %}
+                Content on diagnostics, maintenance, and common breakdowns focused on actionable steps
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<!-- Stats -->
+{% if articles.paginator.count > 0 %}
+<section class="articles-stats">
+    <div class="container">
+        <div class="articles-stats-grid">
+            <div class="articles-stat">
+                <div class="articles-stat-value">{{ articles.paginator.count }}</div>
+                <div class="articles-stat-label">
+                    {% if lang == 'ru' %}
+                        {% if articles.paginator.count == 1 %}статья{% elif articles.paginator.count < 5 %}статьи{% else %}статей{% endif %}
+                    {% elif lang == 'ua' %}
+                        {% if articles.paginator.count == 1 %}стаття{% elif articles.paginator.count < 5 %}статті{% else %}статей{% endif %}
+                    {% else %}
+                        {% if articles.paginator.count == 1 %}article{% else %}articles{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="articles-stat">
+                <div class="articles-stat-value">{{ articles.number }}</div>
+                <div class="articles-stat-label">
+                    {% if lang == 'ru' %}
+                        страница из {{ articles.paginator.num_pages }}
+                    {% elif lang == 'ua' %}
+                        сторінка з {{ articles.paginator.num_pages }}
+                    {% else %}
+                        page of {{ articles.paginator.num_pages }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="articles-stat">
+                <div class="articles-stat-value">{{ articles|length }}</div>
+                <div class="articles-stat-label">
+                    {% if lang == 'ru' %}
+                        на этой странице
+                    {% elif lang == 'ua' %}
+                        на цій сторінці
+                    {% else %}
+                        on this page
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Articles Grid -->
+<section class="articles-content">
+    <div class="container">
+        <div class="articles-header">
+            <h2 class="section-title">
+                {% if lang == 'ru' %}Все публикации{% elif lang == 'ua' %}Всі публікації{% else %}All Publications{% endif %}
+            </h2>
+        </div>
+
+        {% if articles %}
+        <div class="articles-grid">
+            {% for article in articles %}
+            <article class="article-card">
+                <a href="{{ article.detail_url }}" class="article-card-link" aria-label="{{ article.title }}"></a>
+                
+                <div class="article-card-image">
+                    {% if article.primary_image_url %}
+                    <img src="{{ article.primary_image_url }}" alt="{{ article.primary_image_alt|default:article.title }}" loading="lazy">
+                    {% else %}
+                    <div class="article-card-image-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <div class="article-card-image-overlay"></div>
+                    {% if forloop.first %}
+                    <span class="article-card-badge">
+                        {% if lang == 'ru' %}Новое{% elif lang == 'ua' %}Нове{% else %}New{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="article-card-content">
+                    <div class="article-card-meta">
+                        <span class="article-card-date">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            {% if article.published_at %}{{ article.published_at|date:"d.m.Y" }}{% else %}{{ article.created_at|date:"d.m.Y" }}{% endif %}
+                        </span>
+                    </div>
+
+                    <h3 class="article-card-title">{{ article.title }}</h3>
+                    
+                    {% if article.excerpt %}
+                    <p class="article-card-excerpt">{{ article.excerpt|truncatechars:130 }}</p>
+                    {% endif %}
+
+                    <div class="article-card-footer">
+                        <span class="article-card-cta">
+                            {% if lang == 'ru' %}Читать статью{% elif lang == 'ua' %}Читати статтю{% else %}Read Article{% endif %}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M14 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="articles-empty">
+            <div class="articles-empty-icon">📚</div>
+            <h3 class="articles-empty-title">
+                {% if lang == 'ru' %}Пока нет статей{% elif lang == 'ua' %}Поки що немає статей{% else %}No articles yet{% endif %}
+            </h3>
+            <p class="articles-empty-text">
+                {% if lang == 'ru' %}Скоро здесь появятся полезные материалы по ремонту техники.{% elif lang == 'ua' %}Незабаром тут з'являться корисні матеріали з ремонту техніки.{% else %}Soon there will be helpful repair guides here.{% endif %}
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if articles.has_other_pages %}
+        <nav class="articles-pagination" aria-label="{% if lang == 'ru' %}Навигация по страницам{% elif lang == 'ua' %}Навігація по сторінках{% else %}Page navigation{% endif %}">
+            <div class="pagination-info">
+                {% if lang == 'ru' %}
+                    Страница {{ articles.number }} из {{ articles.paginator.num_pages }}
+                {% elif lang == 'ua' %}
+                    Сторінка {{ articles.number }} з {{ articles.paginator.num_pages }}
+                {% else %}
+                    Page {{ articles.number }} of {{ articles.paginator.num_pages }}
+                {% endif %}
+            </div>
+            
+            <div class="pagination-controls">
+                {% if articles.has_previous %}
+                <a href="?page={{ articles.previous_page_number }}" class="pagination-btn pagination-btn-prev">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+                    </svg>
+                    {% if lang == 'ru' %}Назад{% elif lang == 'ua' %}Назад{% else %}Previous{% endif %}
+                </a>
+                {% endif %}
+
+                <div class="pagination-numbers">
+                    {% for page_num in page_range %}
+                        {% if page_num == articles.number %}
+                            <span class="pagination-number active">{{ page_num }}</span>
+                        {% elif page_num == '...' %}
+                            <span class="pagination-ellipsis">...</span>
+                        {% else %}
+                            <a href="?page={{ page_num }}" class="pagination-number">{{ page_num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if articles.has_next %}
+                <a href="?page={{ articles.next_page_number }}" class="pagination-btn pagination-btn-next">
+                    {% if lang == 'ru' %}Далее{% elif lang == 'ua' %}Далі{% else %}Next{% endif %}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M14 5l7 7-7 7"/>
+                    </svg>
+                </a>
+                {% endif %}
+            </div>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card">
+            <div class="cta-bg">
+                <div class="cta-blob cta-blob-1"></div>
+                <div class="cta-blob cta-blob-2"></div>
+            </div>
+            <div class="cta-content">
+                <h2 class="cta-title">
+                    {% if lang == 'ru' %}
+                        Не нашли ответ на свой вопрос?
+                    {% elif lang == 'ua' %}
+                        Не знайшли відповідь на своє питання?
+                    {% else %}
+                        Didn't find the answer to your question?
+                    {% endif %}
+                </h2>
+                <p class="cta-description">
+                    {% if lang == 'ru' %}
+                        Воспользуйтесь поиском по модели или коду ошибки — мы поможем найти решение.
+                    {% elif lang == 'ua' %}
+                        Скористайтеся пошуком за моделлю або кодом помилки — ми допоможемо знайти рішення.
+                    {% else %}
+                        Use the search by model or error code — we'll help you find a solution.
+                    {% endif %}
+                </p>
+                <div class="cta-actions">
+                    <a href="{% url 'products_index' lang %}" class="btn btn-primary btn-lg">
+                        <span class="btn-icon">🔍</span>
+                        {% if lang == 'ru' %}Поиск по модели{% elif lang == 'ua' %}Пошук за моделлю{% else %}Search by Model{% endif %}
+                    </a>
+                    <a href="{% url 'search' lang %}" class="btn btn-outline btn-lg">
+                        <span class="btn-icon">🔎</span>
+                        {% if lang == 'ru' %}Поиск по коду ошибки{% elif lang == 'ua' %}Пошук за кодом помилки{% else %}Search by Error Code{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
