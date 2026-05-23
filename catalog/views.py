@@ -97,6 +97,8 @@ _BREAKDOWN_PREFIX_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _BREAKDOWN_PARENTHETICAL_PATTERN = re.compile(r'\s*\([^)]*\)\s*')
+_PRODUCT_SLUG_ID_PATTERN = re.compile(r'_p(?P<id>\d+)$')
+_BREAKDOWN_SLUG_ID_PATTERN = re.compile(r'_b(?P<id>\d+)$')
 
 
 def _extract_breakdown_slug_parts(text):
@@ -142,6 +144,17 @@ def _get_legacy_breakdown_slug(breakdown, lang):
     title = getattr(breakdown, f'title{suffix}', '') or breakdown.title or f'breakdown-{breakdown.id}'
     slug = slugify(title, allow_unicode=True).replace('-', '_')
     return slug or f'breakdown_{breakdown.id}'
+
+
+def _slugify_path_fragment(value, allow_unicode=True):
+    text = str(value or '').strip()
+    if not text:
+        return ''
+    # Keep common model variants like "Plus" readable instead of collapsing
+    # "Q5 Pro" and "Q5 Pro+" to the same slug.
+    text = text.replace('+', ' plus ')
+    slug = slugify(text, allow_unicode=allow_unicode).replace('-', '_')
+    return slug
 
 def _get_specs_for_language(product, lang):
     specs_raw = getattr(product, f'specs_{lang}')
@@ -330,29 +343,55 @@ def _apply_dynamic_filters(products, groups, selected_values):
 
 def _get_product_slug(product, lang):
     raw_name = getattr(product, f'name_{lang}', '') or getattr(product, 'name', '') or ''
+    product_slug = _slugify_path_fragment(raw_name, allow_unicode=True)
+    if not product_slug:
+        return f'product_{product.id}'
+    return f'{product_slug}_p{product.id}'
+
+
+def _get_legacy_product_slug(product, lang):
+    raw_name = getattr(product, f'name_{lang}', '') or getattr(product, 'name', '') or ''
     product_slug = slugify(raw_name, allow_unicode=True).replace('-', '_')
     return product_slug or f'product_{product.id}'
 
 
-@lru_cache(maxsize=256)
-def _build_product_slug_index(category_id, lang):
-    name_field = f'name_{lang}'
-    index = {}
-    for row in Product.objects.filter(category_id=category_id).values('id', name_field):
-        raw_name = (row.get(name_field) or '').strip()
-        product_id = row['id']
-        slug = slugify(raw_name, allow_unicode=True).replace('-', '_') if raw_name else ''
-        index[slug or f'product_{product_id}'] = product_id
-    return index
+def _normalize_slug_value(value):
+    normalized_value = slugify(str(value or '').replace('+', ' plus '), allow_unicode=True).replace('-', '_')
+    return normalized_value or value
+
+
+def _normalize_article_slug_value(value):
+    normalized_value = slugify(value, allow_unicode=True)
+    return normalized_value or value
+
+
+def _extract_product_id_from_slug(product_slug):
+    match = _PRODUCT_SLUG_ID_PATTERN.search(product_slug or '')
+    if match:
+        return int(match.group('id'))
+    if (product_slug or '').startswith('product_'):
+        try:
+            return int((product_slug or '').replace('product_', '', 1))
+        except ValueError:
+            return None
+    return None
+
+
+def _find_product_id_by_legacy_slug(category, product_slug):
+    legacy_product_id = None
+    products = Product.objects.filter(category=category).only('id', 'name_ru', 'name_ua', 'name_en')
+    for product in products.order_by('id'):
+        for lang in ('ru', 'ua', 'en'):
+            if _get_legacy_product_slug(product, lang) == product_slug:
+                legacy_product_id = product.id
+    return legacy_product_id
 
 
 def _get_product_instance_by_slug(category, lang, product_slug):
-    product_id = _build_product_slug_index(category.id, lang).get(product_slug)
-    if not product_id and product_slug.startswith('product_'):
-        try:
-            product_id = int(product_slug.replace('product_', '', 1))
-        except ValueError:
-            product_id = None
+    normalized_product_slug = _normalize_slug_value(product_slug)
+    product_id = _extract_product_id_from_slug(normalized_product_slug)
+    if not product_id:
+        product_id = _find_product_id_by_legacy_slug(category, normalized_product_slug)
     if not product_id:
         raise Http404('Product not found')
 
@@ -378,15 +417,31 @@ def _build_absolute_url(request, url):
     return request.build_absolute_uri(url)
 
 
+def _has_query_params(query_params):
+    return bool(query_params)
+
+
+def _get_html_lang(lang):
+    return {
+        'ru': 'ru',
+        'ua': 'uk',
+        'en': 'en',
+    }.get(lang, lang or 'en')
+
+
 def _build_page_meta(request, canonical_url=None, alternate_urls=None, robots=None):
     canonical_url = canonical_url or request.path
     absolute_canonical_url = _build_absolute_url(request, canonical_url)
     absolute_alternate_urls = {}
     for language_code, url in (alternate_urls or {}).items():
         absolute_alternate_urls[language_code] = _build_absolute_url(request, url)
+
+    x_default_url = absolute_alternate_urls.get('ru') if absolute_alternate_urls else None
     return {
         'canonical_url': absolute_canonical_url,
         'alternate_urls': absolute_alternate_urls,
+        'x_default_url': x_default_url,
+        'html_lang': _get_html_lang(request.resolver_match.kwargs.get('lang', 'ru') if request.resolver_match else 'ru'),
         'meta_robots': robots or 'index,follow',
     }
 
@@ -990,15 +1045,24 @@ def _get_breakdown_slug(breakdown, lang):
             continue
         code_slugs, semantic_slug = _extract_breakdown_slug_parts(candidate)
         if code_slugs and semantic_slug and semantic_slug != '_'.join(code_slugs):
-            return semantic_slug
+            return f'{semantic_slug}_b{breakdown.id}'
         if semantic_slug:
-            return semantic_slug
+            return f'{semantic_slug}_b{breakdown.id}'
         if code_slugs:
-            return '_'.join(code_slugs)
+            return f'{"_".join(code_slugs)}_b{breakdown.id}'
 
     title = getattr(breakdown, f'title{suffix}', '') or breakdown.title or f'breakdown-{breakdown.id}'
-    slug = slugify(title, allow_unicode=True).replace('-', '_')
-    return slug or f'breakdown_{breakdown.id}'
+    slug = _slugify_path_fragment(title, allow_unicode=True)
+    if not slug:
+        return f'breakdown_{breakdown.id}'
+    return f'{slug}_b{breakdown.id}'
+
+
+def _extract_breakdown_id_from_slug(breakdown_slug):
+    match = _BREAKDOWN_SLUG_ID_PATTERN.search(breakdown_slug or '')
+    if not match:
+        return None
+    return int(match.group('id'))
 
 
 def _build_breakdown_detail_language_urls(category, product, breakdown, query_params=None):
@@ -1021,6 +1085,18 @@ def _build_breakdown_detail_language_urls(category, product, breakdown, query_pa
 
 def healthcheck_view(request):
     return JsonResponse({'status': 'ok'})
+
+
+def index_root_redirect(request):
+    return redirect('index_lang', lang='ru', permanent=True)
+
+
+def legacy_section_redirect_view(request, lang, section_id):
+    canonical_url = _build_url_with_query(
+        reverse('product_section', kwargs={'lang': lang, 'section_id': section_id}),
+        request.GET,
+    )
+    return redirect(canonical_url, permanent=True)
 
 
 def robots_txt(request):
@@ -1165,6 +1241,11 @@ def section_view(request, section_id, lang='ru'):
         {'section_id': category.id_name},
         request.GET,
     )
+    seo_language_urls = _build_language_urls(
+        'product_section',
+        {'section_id': category.id_name},
+    )
+    meta_robots = 'noindex,follow' if _has_query_params(request.GET) else None
     context = {
         'category': category,
         'products': products,
@@ -1181,7 +1262,8 @@ def section_view(request, section_id, lang='ru'):
         **_build_page_meta(
             request,
             canonical_url=reverse('product_section', kwargs={'lang': lang, 'section_id': category.id_name}),
-            alternate_urls=language_urls,
+            alternate_urls=seo_language_urls,
+            robots=meta_robots,
         ),
     }
     return render(request, 'catalog/section_page.html', context)
@@ -1194,6 +1276,15 @@ def product_detail_view(request, lang, section_id, product_slug):
         _get_product_instance_by_slug(category, lang, product_slug),
         lang,
     )
+    requested_product_slug = _normalize_slug_value(product_slug)
+    if requested_product_slug != selected_product.detail_slug:
+        return redirect(
+            'product_detail',
+            lang=lang,
+            section_id=category.id_name,
+            product_slug=selected_product.detail_slug,
+            permanent=True,
+        )
 
     breakdowns = []
     breakdown_group_ids = set()
@@ -1251,6 +1342,7 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
         _get_product_instance_by_slug(category, lang, product_slug),
         lang,
     )
+    requested_product_slug = _normalize_slug_value(product_slug)
 
     breakdown_group_ids = set()
     if selected_product.breakdown_group_id:
@@ -1287,8 +1379,13 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
             },
         )
 
-    requested_breakdown_slug = slugify(breakdown_slug, allow_unicode=True).replace('-', '_')
-    breakdown = next((item for item in breakdowns if item.detail_slug == requested_breakdown_slug), None)
+    requested_breakdown_slug = _normalize_slug_value(breakdown_slug)
+    requested_breakdown_id = _extract_breakdown_id_from_slug(requested_breakdown_slug)
+    breakdown = None
+    if requested_breakdown_id is not None:
+        breakdown = next((item for item in breakdowns if item.id == requested_breakdown_id), None)
+    if breakdown is None:
+        breakdown = next((item for item in breakdowns if item.detail_slug == requested_breakdown_slug), None)
     if breakdown is None:
         breakdown = next(
             (item for item in breakdowns if _get_legacy_breakdown_slug(item, lang) == requested_breakdown_slug),
@@ -1298,7 +1395,7 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
         raise Http404('Breakdown not found')
 
     canonical_breakdown_slug = _get_breakdown_slug(breakdown, lang)
-    if requested_breakdown_slug != canonical_breakdown_slug:
+    if requested_product_slug != selected_product.detail_slug or requested_breakdown_slug != canonical_breakdown_slug:
         return redirect(
             'breakdown_detail',
             lang=lang,
@@ -1357,6 +1454,7 @@ def search_view(request, lang='ru'):
         _prepare_product(product, lang)
 
     language_urls = _build_language_urls('search', query_params=request.GET)
+    seo_language_urls = _build_language_urls('search')
     context = {
         'products': products,
         'pagination': _build_pagination_context(products, request.GET),
@@ -1367,7 +1465,7 @@ def search_view(request, lang='ru'):
         **_build_page_meta(
             request,
             canonical_url=reverse('search', kwargs={'lang': lang}),
-            alternate_urls=language_urls,
+            alternate_urls=seo_language_urls,
             robots='noindex,follow',
         ),
     }
@@ -1398,6 +1496,8 @@ def articles_index(request, lang='ru'):
             page_range = [1, '...', current_page - 1, current_page, current_page + 1, '...', total_pages]
 
     language_urls = _build_language_urls('articles_index', query_params=request.GET)
+    seo_language_urls = _build_language_urls('articles_index')
+    meta_robots = 'noindex,follow' if _has_query_params(request.GET) else None
     context = {
         'articles': articles_page,
         'page_range': page_range,
@@ -1406,7 +1506,8 @@ def articles_index(request, lang='ru'):
         **_build_page_meta(
             request,
             canonical_url=reverse('articles_index', kwargs={'lang': lang}),
-            alternate_urls=language_urls,
+            alternate_urls=seo_language_urls,
+            robots=meta_robots,
         ),
     }
     return render(request, 'catalog/articles_index_wow.html', context)
@@ -1419,8 +1520,15 @@ def article_detail_view(request, lang, article_id, article_slug):
     )
 
     article = _prepare_article(article, lang)
-    if article.detail_slug != article_slug:
-        raise Http404('Article not found')
+    requested_article_slug = _normalize_article_slug_value(article_slug)
+    if article.detail_slug != requested_article_slug:
+        return redirect(
+            'article_detail',
+            lang=lang,
+            article_id=article.id,
+            article_slug=article.detail_slug,
+            permanent=True,
+        )
 
     language_urls = _build_article_detail_language_urls(article)
     context = {

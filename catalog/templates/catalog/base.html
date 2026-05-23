@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{% if lang == 'ua' %}uk{% else %}{{ lang|default:'ru' }}{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,12 +17,12 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'index_lang' lang %}">TechGuide</a>
+            <a class="navbar-brand" href="{% url 'index_lang' lang|default:'ru' %}">TechGuide</a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'index_lang' lang %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'products_index' lang %}">{% if lang == 'ru' %}Товары{% elif lang == 'ua' %}Товари{% else %}Products{% endif %}</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'articles_index' lang %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index_lang' lang|default:'ru' %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'products_index' lang|default:'ru' %}">{% if lang == 'ru' %}Товары{% elif lang == 'ua' %}Товари{% else %}Products{% endif %}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'articles_index' lang|default:'ru' %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a></li>
                 </ul>
                 <div class="lang-switcher">
                     <a href="{% url 'index_lang' 'ru' %}" class="btn btn-sm btn-{% if lang == 'ru' %}primary{% else %}outline-light{% endif %}">RU</a>

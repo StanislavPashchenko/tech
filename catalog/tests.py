@@ -14,6 +14,7 @@ from . import views
 from .admin import BreakdownGroupAdminForm, ProductAdminForm
 from .duplicate_utils import collect_product_duplicates
 from .models import Article, Breakdown, BreakdownGroup, Category, Product, VacuumBrand
+from .sitemaps import BreakdownSitemap, ProductSitemap
 
 
 class VacuumBrandUtilsTests(SimpleTestCase):
@@ -155,7 +156,7 @@ class BreakdownSlugTests(SimpleTestCase):
             description_en='',
         )
 
-        self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'e6')
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'e6_b1')
 
     def test_slug_uses_real_error_phrase_and_ignores_model_name(self):
         breakdown = SimpleNamespace(
@@ -168,7 +169,7 @@ class BreakdownSlugTests(SimpleTestCase):
             description_en='',
         )
 
-        self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'air_duct_blocked')
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'air_duct_blocked_b2')
 
     def test_slug_collects_mixed_digit_and_letter_codes(self):
         breakdown = SimpleNamespace(
@@ -181,7 +182,7 @@ class BreakdownSlugTests(SimpleTestCase):
             description_en='',
         )
 
-        self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'e1_ee_ef')
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'ru'), 'e1_ee_ef_b3')
 
     def test_slug_does_not_collapse_distinct_titles_to_model_code_only(self):
         breakdown = SimpleNamespace(
@@ -194,7 +195,7 @@ class BreakdownSlugTests(SimpleTestCase):
             description_en='',
         )
 
-        self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'tube_blockage_alert')
+        self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'tube_blockage_alert_b4')
 
 
 class ProductAdminFormTests(TestCase):
@@ -1336,6 +1337,13 @@ class ProductDuplicateChecksTests(TestCase):
         self.assertIn('Дублей товаров не найдено.', stdout.getvalue())
 
 
+@override_settings(
+    ALLOWED_HOSTS=['testserver', 'localhost'],
+    STORAGES={
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    },
+)
 class ProductDetailViewTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(
@@ -1397,6 +1405,42 @@ class ProductDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['product'].id, self.product.id)
         self.assertContains(response, 'Подробное описание холодильника')
+
+    def test_product_detail_redirects_other_language_slug_to_canonical_slug(self):
+        response = self.client.get(
+            reverse(
+                'product_detail',
+                args=['en', self.category.id_name, views._get_product_slug(self.product, 'ru')],
+            ),
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response['Location'],
+            reverse(
+                'product_detail',
+                args=['en', self.category.id_name, views._get_product_slug(self.product, 'en')],
+            ),
+        )
+
+    def test_product_detail_redirects_legacy_slug_to_unique_canonical_slug(self):
+        response = self.client.get(
+            reverse(
+                'product_detail',
+                args=['en', self.category.id_name, 'test_fridge'],
+            ),
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response['Location'],
+            reverse(
+                'product_detail',
+                args=['en', self.category.id_name, views._get_product_slug(self.product, 'en')],
+            ),
+        )
 
     def test_section_cards_include_product_detail_links(self):
         response = self.client.get(reverse('product_section', args=['ru', self.category.id_name]))
@@ -1480,9 +1524,9 @@ class ProductDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.context['language_urls']['en'],
-            '/en/products/fridges/test_fridge/',
+            f'/en/products/fridges/{views._get_product_slug(self.product, "en")}/',
         )
-        self.assertContains(response, '/en/products/fridges/test_fridge/')
+        self.assertContains(response, f'/en/products/fridges/{views._get_product_slug(self.product, "en")}/')
 
     def test_product_detail_shows_breakdowns_block(self):
         response = self.client.get(
@@ -1503,7 +1547,7 @@ class ProductDetailViewTests(TestCase):
         self.breakdown.title = 'Код E0 / E1 / E011 / E012 / E013 — сбой электроники панели или силовой платы'
         self.breakdown.save(update_fields=['title'])
 
-        expected_breakdown_slug = 'e0_e1_e011_e012_e013'
+        expected_breakdown_slug = views._get_breakdown_slug(self.breakdown, 'ru')
         expected_breakdown_url = reverse(
             'breakdown_detail',
             args=[
@@ -1549,7 +1593,7 @@ class ProductDetailViewTests(TestCase):
                 'en',
                 self.category.id_name,
                 views._get_product_slug(self.product, 'en'),
-                'tube_blockage_alert',
+                views._get_breakdown_slug(self.breakdown, 'en'),
             ],
         )
 
@@ -1557,6 +1601,34 @@ class ProductDetailViewTests(TestCase):
 
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response['Location'], canonical_url)
+
+    def test_breakdown_detail_redirects_non_canonical_product_slug_to_canonical_slug(self):
+        response = self.client.get(
+            reverse(
+                'breakdown_detail',
+                args=[
+                    'en',
+                    self.category.id_name,
+                    views._get_product_slug(self.product, 'ru'),
+                    views._get_breakdown_slug(self.breakdown, 'en'),
+                ],
+            ),
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response['Location'],
+            reverse(
+                'breakdown_detail',
+                args=[
+                    'en',
+                    self.category.id_name,
+                    views._get_product_slug(self.product, 'en'),
+                    views._get_breakdown_slug(self.breakdown, 'en'),
+                ],
+            ),
+        )
 
     def test_product_detail_hides_empty_breakdown_fields(self):
         self.breakdown.what_to_check = ''
@@ -1697,6 +1769,13 @@ class ProductDetailViewTests(TestCase):
         self.assertContains(response, self.breakdown.title)
 
 
+@override_settings(
+    ALLOWED_HOSTS=['testserver', 'localhost'],
+    STORAGES={
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    },
+)
 class SitemapTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(
@@ -1806,6 +1885,10 @@ class SitemapTests(TestCase):
             ),
         )
 
+    def test_product_sitemap_locations_are_unique(self):
+        urls = [ProductSitemap().location(item) for item in ProductSitemap().items()]
+        self.assertEqual(len(urls), len(set(urls)))
+
     def test_breakdown_sitemap_contains_product_specific_breakdown_detail_urls(self):
         response = self.client.get('/sitemap-breakdowns.xml')
 
@@ -1835,6 +1918,10 @@ class SitemapTests(TestCase):
             ),
         )
 
+    def test_breakdown_sitemap_locations_are_unique(self):
+        urls = [BreakdownSitemap().location(item) for item in BreakdownSitemap().items()]
+        self.assertEqual(len(urls), len(set(urls)))
+
     def test_article_sitemap_contains_published_article_urls(self):
         response = self.client.get('/sitemap-articles.xml')
 
@@ -1848,6 +1935,13 @@ class SitemapTests(TestCase):
         )
 
 
+@override_settings(
+    ALLOWED_HOSTS=['testserver', 'localhost'],
+    STORAGES={
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    },
+)
 class SiteMetaAndHealthTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(
@@ -1900,6 +1994,18 @@ class SiteMetaAndHealthTests(TestCase):
             what_to_check_en='What to check',
             how_to_fix_en='How to fix',
         )
+        self.article = Article.objects.create(
+            slug='site-meta-article',
+            title_ru='Статья для SEO',
+            excerpt_ru='Краткое описание статьи',
+            content_ru='Текст статьи',
+            title_ua='Стаття для SEO',
+            excerpt_ua='Короткий опис статті',
+            content_ua='Текст статті',
+            title_en='SEO article',
+            excerpt_en='Short article description',
+            content_en='Article body',
+        )
 
     def test_healthcheck_endpoint_returns_ok_status(self):
         response = self.client.get(reverse('healthcheck'))
@@ -1916,6 +2022,43 @@ class SiteMetaAndHealthTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<meta name="robots" content="noindex,follow">', html=False)
         self.assertContains(response, '<link rel="canonical" href="http://testserver/ru/search/">', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="ru" href="http://testserver/ru/search/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="uk" href="http://testserver/ua/search/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="en" href="http://testserver/en/search/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="x-default" href="http://testserver/ru/search/"', html=False)
+        self.assertNotContains(response, 'href="/ru/search/?q="', html=False)
+
+    def test_filtered_section_page_is_noindex_and_uses_clean_hreflang(self):
+        response = self.client.get(
+            reverse('product_section', args=['ru', self.category.id_name]),
+            {'brand': ['testbrand'], 'page': 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<meta name="robots" content="noindex,follow">', html=False)
+        self.assertContains(response, '<link rel="canonical" href="http://testserver/ru/products/fridges/">', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="ru" href="http://testserver/ru/products/fridges/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="uk" href="http://testserver/ua/products/fridges/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="en" href="http://testserver/en/products/fridges/"', html=False)
+
+    @override_settings(
+        STORAGES={
+            'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+            'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+        }
+    )
+    def test_paginated_articles_page_is_noindex_and_uses_clean_hreflang(self):
+        response = self.client.get(
+            reverse('articles_index', args=['ru']),
+            {'page': 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<meta name="robots" content="noindex,follow">', html=False)
+        self.assertContains(response, '<link rel="canonical" href="http://testserver/ru/articles/">', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="ru" href="http://testserver/ru/articles/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="uk" href="http://testserver/ua/articles/"', html=False)
+        self.assertContains(response, 'rel="alternate" hreflang="en" href="http://testserver/en/articles/"', html=False)
 
     def test_product_detail_includes_hreflang_and_favicon(self):
         response = self.client.get(
@@ -1931,6 +2074,50 @@ class SiteMetaAndHealthTests(TestCase):
         self.assertContains(response, 'rel="alternate" hreflang="en"', html=False)
         self.assertContains(response, 'catalog/favicon', html=False)
         self.assertContains(response, 'catalog/og-image', html=False)
+
+    def test_product_detail_uses_ru_page_as_x_default(self):
+        response = self.client.get(
+            reverse(
+                'product_detail',
+                args=['en', self.category.id_name, views._get_product_slug(self.product, 'en')],
+            )
+        )
+        ru_url = reverse(
+            'product_detail',
+            args=['ru', self.category.id_name, views._get_product_slug(self.product, 'ru')],
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'rel="alternate" hreflang="x-default" href="http://testserver{ru_url}"',
+            html=False,
+        )
+
+    def test_ukrainian_homepage_uses_uk_html_lang(self):
+        response = self.client.get(reverse('index_lang', args=['ua']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<html lang="uk">', html=False)
+
+    def test_root_url_redirects_to_ru_homepage(self):
+        response = self.client.get(reverse('index'), follow=False)
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], reverse('index_lang', args=['ru']))
+
+    def test_legacy_section_url_redirects_to_products_section(self):
+        response = self.client.get(
+            reverse('section', args=['ru', self.category.id_name]),
+            {'brand': 'testbrand'},
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response['Location'],
+            f"{reverse('product_section', args=['ru', self.category.id_name])}?brand=testbrand",
+        )
 
     def test_breakdown_detail_has_specific_meta_description(self):
         response = self.client.get(
@@ -1948,7 +2135,38 @@ class SiteMetaAndHealthTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<meta name="description" content="Error E1 - A detailed explanation of the breakdown cause', html=False)
 
+    def test_article_detail_redirects_non_canonical_slug_to_canonical_slug(self):
+        response = self.client.get(
+            reverse(
+                'article_detail',
+                args=['en', self.article.id, 'wrong-slug'],
+            ),
+            follow=False,
+        )
 
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response['Location'],
+            reverse(
+                'article_detail',
+                args=['en', self.article.id, views._get_article_slug(self.article, 'en')],
+            ),
+        )
+
+    def test_article_detail_opens_with_hyphenated_ukrainian_slug_without_redirect_loop(self):
+        ua_slug = views._get_article_slug(self.article, 'ua')
+        response = self.client.get(
+            reverse(
+                'article_detail',
+                args=['ua', self.article.id, ua_slug],
+            ),
+            follow=False,
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+
+@override_settings(ALLOWED_HOSTS=['testserver', 'localhost'])
 class HomePageViewTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(

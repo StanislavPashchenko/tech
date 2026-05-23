@@ -2,7 +2,7 @@ from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.index_root_redirect, name='index'),
     path('health/', views.healthcheck_view, name='healthcheck'),
     re_path(r'^(?P<lang>ru|ua|en)/$', views.index, name='index_lang'),
     re_path(r'^(?P<lang>ru|ua|en)/search/$', views.search_view, name='search'),
@@ -12,5 +12,5 @@ urlpatterns = [
     re_path(r'^(?P<lang>ru|ua|en)/products/(?P<section_id>[^/]+)/(?P<product_slug>[^/]+)/(?P<breakdown_slug>[^/]+)/$', views.breakdown_detail_view, name='breakdown_detail'),
     re_path(r'^(?P<lang>ru|ua|en)/products/(?P<section_id>[^/]+)/(?P<product_slug>[^/]+)/$', views.product_detail_view, name='product_detail'),
     re_path(r'^(?P<lang>ru|ua|en)/products/(?P<section_id>[^/]+)/$', views.section_view, name='product_section'),
-    re_path(r'^(?P<lang>ru|ua|en)/section/(?P<section_id>[^/]+)/$', views.section_view, name='section'),
+    re_path(r'^(?P<lang>ru|ua|en)/section/(?P<section_id>[^/]+)/$', views.legacy_section_redirect_view, name='section'),
 ]

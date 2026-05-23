@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ html_lang|default:lang|default:'ru' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
     {% if alternate_urls.ru %}<link rel="alternate" hreflang="ru" href="{{ alternate_urls.ru }}">{% endif %}
     {% if alternate_urls.ua %}<link rel="alternate" hreflang="uk" href="{{ alternate_urls.ua }}">{% endif %}
     {% if alternate_urls.en %}<link rel="alternate" hreflang="en" href="{{ alternate_urls.en }}">{% endif %}
-    {% if canonical_url %}<link rel="alternate" hreflang="x-default" href="{{ canonical_url }}">{% endif %}
+    {% if x_default_url %}<link rel="alternate" hreflang="x-default" href="{{ x_default_url }}">{% endif %}
     <link rel="icon" type="image/svg+xml" href="{% static 'catalog/favicon.svg' %}">
     <link rel="apple-touch-icon" href="{% static 'catalog/og-image.png' %}">
     
@@ -40,7 +40,7 @@
     <header class="site-header">
         <div class="container">
             <nav class="navbar navbar-expand-lg site-nav">
-                <a class="navbar-brand site-brand" href="{% url 'index_lang' lang %}">
+                <a class="navbar-brand site-brand" href="{% url 'index_lang' lang|default:'ru' %}">
                     <span class="site-brand-mark">TG</span>
                     <span>
                         <strong>TechGuide</strong>
@@ -54,12 +54,12 @@
                 </button>
                 <div class="collapse navbar-collapse" id="siteNav">
                     <ul class="navbar-nav me-auto site-menu">
-                        <li class="nav-item"><a class="nav-link" href="{% url 'index_lang' lang %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'products_index' lang %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'articles_index' lang %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'index_lang' lang|default:'ru' %}">{% if lang == 'ru' %}Главная{% elif lang == 'ua' %}Головна{% else %}Home{% endif %}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'products_index' lang|default:'ru' %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'articles_index' lang|default:'ru' %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a></li>
                     </ul>
 
-                    <form class="site-search" action="{% url 'search' lang %}" method="get">
+                    <form class="site-search" action="{% url 'search' lang|default:'ru' %}" method="get">
                         <input type="search" name="q" value="{{ query|default:'' }}" placeholder="{% if lang == 'ru' %}Поиск по модели или ошибке{% elif lang == 'ua' %}Пошук за моделлю або помилкою{% else %}Search by model or issue{% endif %}" aria-label="Search">
                         <button type="submit">{% if lang == 'ru' %}Найти{% elif lang == 'ua' %}Знайти{% else %}Search{% endif %}</button>
                     </form>
@@ -97,9 +97,9 @@
                     </p>
                 </div>
                 <div class="site-footer-links">
-                    <a href="{% url 'products_index' lang %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a>
-                    <a href="{% url 'articles_index' lang %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a>
-                    <a href="{% url 'search' lang %}?q=">{% if lang == 'ru' %}Поиск{% elif lang == 'ua' %}Пошук{% else %}Search{% endif %}</a>
+                    <a href="{% url 'products_index' lang|default:'ru' %}">{% if lang == 'ru' %}Каталог{% elif lang == 'ua' %}Каталог{% else %}Catalog{% endif %}</a>
+                    <a href="{% url 'articles_index' lang|default:'ru' %}">{% if lang == 'ru' %}Статьи{% elif lang == 'ua' %}Статті{% else %}Articles{% endif %}</a>
+                    <a href="{% url 'search' lang|default:'ru' %}">{% if lang == 'ru' %}Поиск{% elif lang == 'ua' %}Пошук{% else %}Search{% endif %}</a>
                 </div>
             </div>
         </div>
