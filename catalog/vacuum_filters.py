@@ -3391,14 +3391,24 @@ def _contains_any(text, fragments):
 
 
 def _get_product_text(product):
+    cached_text = getattr(product, '_cached_product_text', None)
+    if cached_text is not None:
+        return cached_text
     general = _get_general_specs(product)
     general_text = ' '.join(f'{key} {value}' for key, value in general.items())
-    return _normalize_text(' '.join(filter(None, [product.name, product.description, general_text])))
+    product_text = _normalize_text(' '.join(filter(None, [product.name, product.description, general_text])))
+    product._cached_product_text = product_text
+    return product_text
 
 
 def _get_general_specs(product):
+    cached_general = getattr(product, '_cached_general_specs', None)
+    if cached_general is not None:
+        return cached_general
     general = product.specs.get('general') if isinstance(product.specs, dict) else {}
-    return general or {}
+    general = general or {}
+    product._cached_general_specs = general
+    return general
 
 
 def _get_value_by_keys(general, keys):

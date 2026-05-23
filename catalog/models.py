@@ -1,11 +1,9 @@
 import os
 
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.text import slugify
-
-
-ARTICLE_IMAGE_CLOUDFLARE_PREFIX = 'https://pub-6917b9abd5364cef8cbe869ff198c43a.r2.dev/items/test/'
 
 class Category(models.Model):
     id_name = models.CharField(max_length=100, unique=True)
@@ -205,10 +203,14 @@ class ArticleImage(models.Model):
     def _build_cloudflare_url_from_legacy_image(self):
         if not self.image:
             return ''
+        prefix = (getattr(settings, 'ARTICLE_IMAGE_CLOUDFLARE_PREFIX', '') or '').strip()
+        if not prefix:
+            return ''
         filename = os.path.basename(self.image.name or '').strip()
         if not filename:
             return ''
-        return f'{ARTICLE_IMAGE_CLOUDFLARE_PREFIX}{filename}'
+        normalized_prefix = f'{prefix.rstrip("/")}/'
+        return f'{normalized_prefix}{filename}'
 
     def save(self, *args, **kwargs):
         if not self.cloudflare_url:

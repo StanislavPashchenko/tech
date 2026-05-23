@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.urls import reverse
+from django.views.decorators.cache import cache_page
 from django.utils import timezone
 from django.utils.text import slugify
 from .models import Article, Breakdown, Category, Product, BreakdownGroup
@@ -99,6 +100,9 @@ _BREAKDOWN_PREFIX_PATTERN = re.compile(
 _BREAKDOWN_PARENTHETICAL_PATTERN = re.compile(r'\s*\([^)]*\)\s*')
 _PRODUCT_SLUG_ID_PATTERN = re.compile(r'_p(?P<id>\d+)$')
 _BREAKDOWN_SLUG_ID_PATTERN = re.compile(r'_b(?P<id>\d+)$')
+
+PUBLIC_PAGE_CACHE_TTL = 60 * 15
+SEARCH_PAGE_CACHE_TTL = 60 * 5
 
 
 def _extract_breakdown_slug_parts(text):
@@ -903,11 +907,12 @@ def _get_published_articles_queryset():
     )
 
 
-def _prepare_article(article, lang):
+def _prepare_article(article, lang, include_content_html=False):
     article.title = getattr(article, f'title_{lang}', '') or article.title_ru or article.title_ua or article.title_en
     article.excerpt = getattr(article, f'excerpt_{lang}', '') or ''
     article.content = getattr(article, f'content_{lang}', '') or ''
-    article.content_html = render_article_markdown(article.content)
+    if include_content_html:
+        article.content_html = render_article_markdown(article.content)
     article.detail_slug = _get_article_slug(article, lang)
     article.detail_url = reverse('article_detail', args=[lang, article.id, article.detail_slug])
     article.display_images = list(article.images.all())
@@ -1024,12 +1029,54 @@ def _prepare_product(product, lang):
     product.name = getattr(product, f'name_{lang}')
     product.description = getattr(product, f'description_{lang}')
     product.specs = _get_specs_for_language(product, lang)
-    product.flat_specs = _flatten_specs(product.specs)
     product.brand_name = _extract_brand(product, lang)
     product.brand_slug = get_brand_slug(product.brand_name)
+    product._cached_general_specs = product.specs.get('general') if isinstance(product.specs, dict) else {}
+    product._cached_general_specs = product._cached_general_specs or {}
     product.detail_slug = _get_product_slug(product, lang)
     product.detail_url = reverse('product_detail', args=[lang, product.category.id_name, product.detail_slug])
     return product
+
+
+def _prepare_product_detail(product, lang):
+    product = _prepare_product(product, lang)
+    product.flat_specs = _flatten_specs(product.specs)
+    product.detail_slug = _get_product_slug(product, lang)
+    product.detail_url = reverse('product_detail', args=[lang, product.category.id_name, product.detail_slug])
+    return product
+
+
+def _get_catalog_products_queryset(lang=None):
+    only_fields = [
+        'id',
+        'category_id',
+        'category__id_name',
+        'category__name_ru',
+        'category__name_ua',
+        'category__name_en',
+        'brand_id',
+        'brand__name',
+        'name_ru',
+        'name_ua',
+        'name_en',
+        'images',
+        'product_folder',
+    ]
+    if lang in {'ru', 'ua', 'en'}:
+        only_fields.extend([
+            f'description_{lang}',
+            f'specs_{lang}',
+        ])
+    else:
+        only_fields.extend([
+            'description_ru',
+            'description_ua',
+            'description_en',
+            'specs_ru',
+            'specs_ua',
+            'specs_en',
+        ])
+    return Product.objects.select_related('brand', 'category').only(*only_fields)
 
 
 def _get_breakdown_slug(breakdown, lang):
@@ -1104,6 +1151,7 @@ def robots_txt(request):
     content = f'User-agent: *\nAllow: /\nSitemap: {sitemap_url}\n'
     return HttpResponse(content, content_type='text/plain; charset=utf-8')
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def index(request, lang='ru'):
     categories = list(
         Category.objects.annotate(product_count=Count('products'))
@@ -1119,13 +1167,10 @@ def index(request, lang='ru'):
         'categories': len(categories),
     }
     home_content = _get_homepage_content(lang)
-    
-    articles_qs = _get_published_articles_queryset()[:6]
-    featured_articles = [_prepare_article(article, lang) for article in articles_qs]
-    
+
     context = {
         'categories': categories[:9],
-        'featured_articles': featured_articles,
+        'featured_articles': [],
         'home_content': home_content,
         'home_metrics': [
             {
@@ -1147,6 +1192,7 @@ def index(request, lang='ru'):
     template_path = 'catalog/home.html'
     return render(request, template_path, context)
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def products_index(request, lang='ru'):
     categories = list(Category.objects.annotate(
         product_count=Count('products')
@@ -1182,13 +1228,13 @@ def products_index(request, lang='ru'):
     template_path = 'catalog/home.html'
     return render(request, template_path, context)
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def section_view(request, section_id, lang='ru'):
     category = get_object_or_404(Category, id_name=section_id)
     products_list = [
         _prepare_product(product, lang)
-        for product in Product.objects.select_related('brand', 'category').filter(category=category)
+        for product in _get_catalog_products_queryset(lang=lang).filter(category=category)
     ]
-    products_list.sort(key=lambda product: (product.brand_name.lower(), (product.name or '').lower(), product.id))
 
     vacuum_filter_groups = []
     selected_filter_state = {}
@@ -1205,6 +1251,8 @@ def section_view(request, section_id, lang='ru'):
             selected_filter_state,
         )
         vacuum_filter_groups = enrich_filter_groups(vacuum_filter_groups, selected_filter_state)
+
+    filtered_products.sort(key=lambda product: (product.brand_name.lower(), (product.name or '').lower(), product.id))
 
     brand_map = {}
     for product in filtered_products:
@@ -1269,10 +1317,11 @@ def section_view(request, section_id, lang='ru'):
     return render(request, 'catalog/section_page.html', context)
 
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def product_detail_view(request, lang, section_id, product_slug):
     category = get_object_or_404(Category, id_name=section_id)
     labels = _get_product_detail_labels(lang)
-    selected_product = _prepare_product(
+    selected_product = _prepare_product_detail(
         _get_product_instance_by_slug(category, lang, product_slug),
         lang,
     )
@@ -1335,10 +1384,11 @@ def product_detail_view(request, lang, section_id, product_slug):
     return render(request, 'catalog/product_detail.html', context)
 
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slug):
     category = get_object_or_404(Category, id_name=section_id)
     labels = _get_product_detail_labels(lang)
-    selected_product = _prepare_product(
+    selected_product = _prepare_product_detail(
         _get_product_instance_by_slug(category, lang, product_slug),
         lang,
     )
@@ -1420,6 +1470,7 @@ def breakdown_detail_view(request, lang, section_id, product_slug, breakdown_slu
     }
     return render(request, 'catalog/breakdown_detail.html', context)
 
+@cache_page(SEARCH_PAGE_CACHE_TTL)
 def search_view(request, lang='ru'):
     query = request.GET.get('q', '').strip()
     products_list = Product.objects.none()
@@ -1427,24 +1478,27 @@ def search_view(request, lang='ru'):
     if query:
         suffix = '' if lang == 'ru' else f'_{lang}'
         
-        # 1. Прямой поиск по товарам (имя, папка, описание)
-        product_q = Q(**{f'name_{lang}__icontains': query}) | \
-                    Q(product_folder__icontains=query) | \
-                    Q(**{f'description_{lang}__icontains': query})
-        
-        # 2. Поиск по поломкам (коды ошибок, названия, симптомы)
-        breakdown_q = Q(**{f'title{suffix}__icontains': query}) | \
-                      Q(**{f'possible_causes{suffix}__icontains': query}) | \
-                      Q(**{f'what_to_check{suffix}__icontains': query}) | \
-                      Q(**{f'how_to_fix{suffix}__icontains': query})
-        
-        # Находим группы поломок, которые содержат подходящие поломки
-        matching_groups = BreakdownGroup.objects.filter(breakdowns__in=Breakdown.objects.filter(breakdown_q))
-        
-        # Добавляем товары, связанные с этими группами поломок
-        product_q |= Q(breakdown_group__in=matching_groups) | Q(breakdown_groups__in=matching_groups)
-        
-        products_list = Product.objects.select_related('brand', 'category').filter(product_q).distinct().order_by('id')
+        product_q = (
+            Q(**{f'name_{lang}__icontains': query})
+            | Q(product_folder__icontains=query)
+            | Q(**{f'description_{lang}__icontains': query})
+        )
+
+        breakdown_q = (
+            Q(**{f'title{suffix}__icontains': query})
+            | Q(**{f'possible_causes{suffix}__icontains': query})
+            | Q(**{f'what_to_check{suffix}__icontains': query})
+            | Q(**{f'how_to_fix{suffix}__icontains': query})
+        )
+        matching_group_ids = Breakdown.objects.filter(breakdown_q).values('breakdown_group_id')
+        matching_related_product_ids = Product.objects.filter(
+            Q(breakdown_group_id__in=matching_group_ids) | Q(breakdown_groups__id__in=matching_group_ids)
+        ).values_list('id', flat=True)
+
+        combined_product_ids = Product.objects.filter(product_q).values_list('id', flat=True).union(
+            matching_related_product_ids
+        )
+        products_list = _get_catalog_products_queryset(lang=lang).filter(id__in=combined_product_ids).order_by('id')
     
     paginator = Paginator(products_list, 12)
     page_number = request.GET.get('page')
@@ -1473,6 +1527,7 @@ def search_view(request, lang='ru'):
     return render(request, template_path, context)
 
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def articles_index(request, lang='ru'):
     articles_qs = _get_published_articles_queryset()
     paginator = Paginator(articles_qs, 15)
@@ -1513,13 +1568,14 @@ def articles_index(request, lang='ru'):
     return render(request, 'catalog/articles_index_wow.html', context)
 
 
+@cache_page(PUBLIC_PAGE_CACHE_TTL)
 def article_detail_view(request, lang, article_id, article_slug):
     article = get_object_or_404(
         _get_published_articles_queryset(),
         id=article_id,
     )
 
-    article = _prepare_article(article, lang)
+    article = _prepare_article(article, lang, include_content_html=True)
     requested_article_slug = _normalize_article_slug_value(article_slug)
     if article.detail_slug != requested_article_slug:
         return redirect(

@@ -1,3 +1,4 @@
+from bisect import bisect_right
 from collections import defaultdict
 
 from django.contrib.sitemaps import Sitemap
@@ -10,6 +11,79 @@ from .views import _get_article_slug, _get_breakdown_slug, _get_product_slug
 
 
 LANGUAGES = ("ru", "ua", "en")
+
+
+class BreakdownSitemapItems:
+    """Sequence-like container that keeps Django sitemap pagination lazy."""
+
+    def __init__(self, entries):
+        self._entries = entries
+        self._entry_offsets = []
+        total = 0
+        for entry in entries:
+            total += entry["count"]
+            self._entry_offsets.append(total)
+        self._total = total
+
+    def __len__(self):
+        return self._total
+
+    def __iter__(self):
+        for entry in self._entries:
+            product = entry["product"]
+            for breakdown in entry["breakdowns"]:
+                for lang in LANGUAGES:
+                    yield (lang, product, breakdown)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            start, stop, step = key.indices(self._total)
+            if step != 1:
+                return [self[index] for index in range(start, stop, step)]
+            return self._slice(start, stop)
+
+        index = int(key)
+        if index < 0:
+            index += self._total
+        if index < 0 or index >= self._total:
+            raise IndexError("Breakdown sitemap item index out of range")
+        return self._item_at(index)
+
+    def _slice(self, start, stop):
+        if start >= stop:
+            return []
+
+        result = []
+        entry_index = bisect_right(self._entry_offsets, start)
+        current_index = start
+
+        while current_index < stop and entry_index < len(self._entries):
+            previous_offset = 0 if entry_index == 0 else self._entry_offsets[entry_index - 1]
+            entry = self._entries[entry_index]
+            breakdowns = entry["breakdowns"]
+            relative_index = current_index - previous_offset
+            breakdown_index, language_index = divmod(relative_index, len(LANGUAGES))
+
+            while breakdown_index < len(breakdowns) and current_index < stop:
+                breakdown = breakdowns[breakdown_index]
+                while language_index < len(LANGUAGES) and current_index < stop:
+                    result.append((LANGUAGES[language_index], entry["product"], breakdown))
+                    current_index += 1
+                    language_index += 1
+                breakdown_index += 1
+                language_index = 0
+
+            entry_index += 1
+
+        return result
+
+    def _item_at(self, index):
+        entry_index = bisect_right(self._entry_offsets, index)
+        previous_offset = 0 if entry_index == 0 else self._entry_offsets[entry_index - 1]
+        entry = self._entries[entry_index]
+        relative_index = index - previous_offset
+        breakdown_index, language_index = divmod(relative_index, len(LANGUAGES))
+        return (LANGUAGES[language_index], entry["product"], entry["breakdowns"][breakdown_index])
 
 
 class StaticViewSitemap(Sitemap):
@@ -98,7 +172,7 @@ class BreakdownSitemap(Sitemap):
             "description_ua",
             "title_en",
             "description_en",
-        ).order_by("id"):
+        ).order_by("id").iterator(chunk_size=2000):
             breakdowns_by_group[breakdown.breakdown_group_id].append(breakdown)
 
         generic_group_ids_by_category = defaultdict(list)
@@ -116,8 +190,8 @@ class BreakdownSitemap(Sitemap):
         ).values_list("product_id", "breakdowngroup_id"):
             additional_group_ids_by_product[product_id].append(breakdown_group_id)
 
-        items = []
-        for product in Product.objects.select_related("category").only(
+        entries = []
+        products = Product.objects.select_related("category").only(
             "id",
             "category_id",
             "category__id_name",
@@ -126,7 +200,8 @@ class BreakdownSitemap(Sitemap):
             "name_ru",
             "name_ua",
             "name_en",
-        ).order_by("id"):
+        ).order_by("id").iterator(chunk_size=1000)
+        for product in products:
             group_ids = set(generic_group_ids_by_category.get(product.category_id, ()))
             if product.breakdown_group_id:
                 group_ids.add(product.breakdown_group_id)
@@ -136,11 +211,20 @@ class BreakdownSitemap(Sitemap):
                     brand_group_ids_by_category_brand.get((product.category_id, product.brand_id), ())
                 )
 
+            product_breakdowns = []
             for group_id in sorted(group_ids):
-                for breakdown in breakdowns_by_group.get(group_id, ()):
-                    for lang in LANGUAGES:
-                        items.append((lang, product, breakdown))
-        return items
+                product_breakdowns.extend(breakdowns_by_group.get(group_id, ()))
+
+            if product_breakdowns:
+                entries.append(
+                    {
+                        "product": product,
+                        "breakdowns": tuple(product_breakdowns),
+                        "count": len(product_breakdowns) * len(LANGUAGES),
+                    }
+                )
+
+        return BreakdownSitemapItems(entries)
 
     def location(self, item):
         lang, product, breakdown = item

@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.urls import reverse
 from django.test import SimpleTestCase, TestCase, override_settings
 
@@ -13,7 +15,7 @@ from . import brand_utils
 from . import views
 from .admin import BreakdownGroupAdminForm, ProductAdminForm
 from .duplicate_utils import collect_product_duplicates
-from .models import Article, Breakdown, BreakdownGroup, Category, Product, VacuumBrand
+from .models import Article, ArticleImage, Breakdown, BreakdownGroup, Category, Product, VacuumBrand
 from .sitemaps import BreakdownSitemap, ProductSitemap
 
 
@@ -72,6 +74,36 @@ class VacuumBrandUtilsTests(SimpleTestCase):
             ),
             'HOTO',
         )
+
+
+class VacuumBrandLookupFallbackTests(TestCase):
+    def tearDown(self):
+        brand_utils.load_vacuum_brand_names.cache_clear()
+        brand_utils.load_vacuum_brand_lookup.cache_clear()
+
+    @patch('catalog.brand_utils.os.path.exists', return_value=False)
+    def test_load_vacuum_brand_names_falls_back_to_cleaners_category_brands(self, _):
+        cleaners, _ = Category.objects.get_or_create(
+            id_name='cleaners',
+            defaults={
+                'name_ru': 'Пылесосы',
+                'name_ua': 'Пилососи',
+                'name_en': 'Vacuum Cleaners',
+                'folder': 'last_cleaners',
+            },
+        )
+        other = Category.objects.create(
+            id_name='ovens-brand-lookup',
+            name_ru='Духовки',
+            name_ua='Духовки',
+            name_en='Ovens',
+            folder='last_ovens',
+        )
+        VacuumBrand.objects.create(category=cleaners, name='Samsung', slug='samsung')
+        VacuumBrand.objects.create(category=cleaners, name='LG', slug='lg')
+        VacuumBrand.objects.create(category=other, name='Other Brand', slug='other-brand')
+
+        self.assertEqual(brand_utils.load_vacuum_brand_names(), ('LG', 'Samsung'))
 
 
 class FixWashingNoDryFromEkTests(SimpleTestCase):
@@ -196,6 +228,57 @@ class BreakdownSlugTests(SimpleTestCase):
         )
 
         self.assertEqual(views._get_breakdown_slug(breakdown, 'en'), 'tube_blockage_alert_b4')
+
+
+class ArticlePreparationTests(TestCase):
+    def setUp(self):
+        self.article = Article.objects.create(
+            slug='article-prep-test',
+            title_ru='Тестовая статья',
+            excerpt_ru='Короткое описание',
+            content_ru='**Жирный** текст',
+            title_ua='Тестова стаття',
+            excerpt_ua='Короткий опис',
+            content_ua='**Жирний** текст',
+            title_en='Test article',
+            excerpt_en='Short description',
+            content_en='**Bold** text',
+        )
+
+    def test_prepare_article_skips_content_html_by_default(self):
+        article = views._prepare_article(self.article, 'ru')
+
+        self.assertFalse(hasattr(article, 'content_html'))
+
+    def test_prepare_article_renders_content_html_for_detail_pages(self):
+        article = views._prepare_article(self.article, 'ru', include_content_html=True)
+
+        self.assertIn('<strong>Жирный</strong>', article.content_html)
+
+
+@override_settings(ARTICLE_IMAGE_CLOUDFLARE_PREFIX='https://cdn.example.com/articles')
+class ArticleImageModelTests(TestCase):
+    def test_save_builds_cloudflare_url_from_settings_prefix(self):
+        article = Article.objects.create(
+            slug='article-image-test',
+            title_ru='Статья с картинкой',
+            excerpt_ru='Короткое описание',
+            content_ru='Текст',
+            title_ua='Стаття з картинкою',
+            excerpt_ua='Короткий опис',
+            content_ua='Текст',
+            title_en='Article with image',
+            excerpt_en='Short description',
+            content_en='Body',
+        )
+
+        image = ArticleImage.objects.create(
+            article=article,
+            image='articles/2026/04/cover.jpg',
+        )
+
+        self.assertEqual(image.cloudflare_url, 'https://cdn.example.com/articles/cover.jpg')
+        self.assertEqual(image.image_url, 'https://cdn.example.com/articles/cover.jpg')
 
 
 class ProductAdminFormTests(TestCase):
@@ -1922,6 +2005,24 @@ class SitemapTests(TestCase):
         urls = [BreakdownSitemap().location(item) for item in BreakdownSitemap().items()]
         self.assertEqual(len(urls), len(set(urls)))
 
+    def test_breakdown_sitemap_items_support_django_pagination(self):
+        items = BreakdownSitemap().items()
+
+        paginator = Paginator(items, 2)
+        page = paginator.page(2)
+
+        self.assertEqual(paginator.count, 6)
+        self.assertEqual(len(page.object_list), 2)
+
+    def test_sitemap_index_lists_paginated_breakdown_pages(self):
+        cache.clear()
+        with patch.object(BreakdownSitemap, 'limit', 1):
+            response = self.client.get('/sitemap.xml')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '/sitemap-breakdowns.xml?p=2')
+        self.assertContains(response, '/sitemap-breakdowns.xml?p=6')
+
     def test_article_sitemap_contains_published_article_urls(self):
         response = self.client.get('/sitemap-articles.xml')
 
@@ -2213,9 +2314,9 @@ class HomePageViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['page_mode'], 'home')
         self.assertContains(response, 'TechGuide Service')
-        self.assertContains(response, 'Редакционная главная для диагностики, маршрутов и базы знаний по технике.')
-        self.assertContains(response, 'Главные показатели')
-        self.assertContains(response, 'Три шага от запроса до решения')
+        self.assertContains(response, 'Ремонтируй технику')
+        self.assertContains(response, 'Найти модель')
+        self.assertContains(response, 'Выберите тип техники')
         self.assertContains(response, reverse('products_index', args=['ru']))
         self.assertContains(response, reverse('product_section', args=['ru', self.category.id_name]))
 
@@ -2237,3 +2338,51 @@ class HomePageViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['featured_articles'], [])
         self.assertNotContains(response, self.article.title_ru)
+
+
+@override_settings(
+    ALLOWED_HOSTS=['testserver', 'localhost'],
+    STORAGES={
+        'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    },
+)
+class SectionPageRenderingTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            id_name='section-speed-test',
+            name_ru='Холодильники',
+            name_ua='Холодильники',
+            name_en='Fridges',
+            folder='section_speed_test',
+        )
+        self.brand = VacuumBrand.objects.create(
+            category=self.category,
+            name='SpeedBrand',
+            slug='speedbrand',
+        )
+        self.product = Product.objects.create(
+            category=self.category,
+            brand=self.brand,
+            name_ru='Тестовый холодильник',
+            name_ua='Тестовий холодильник',
+            name_en='Test Fridge',
+            description_ru='Описание модели',
+            description_ua='Опис моделі',
+            description_en='Product description',
+            specs_ru={'general': {'Тип': 'двухкамерный'}},
+            specs_ua={'general': {'Тип': 'двокамерний'}},
+            specs_en={'general': {'Type': 'double-door'}},
+            images=['https://example.com/1.jpg'],
+        )
+
+    def test_section_page_renders_product_cards_with_detail_links(self):
+        response = self.client.get(reverse('product_section', args=['ru', self.category.id_name]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['products_count'], 1)
+        self.assertContains(response, self.product.name_ru)
+        self.assertContains(
+            response,
+            reverse('product_detail', args=['ru', self.category.id_name, views._get_product_slug(self.product, 'ru')]),
+        )

@@ -20,23 +20,26 @@ from django.contrib.sitemaps.views import sitemap as sitemap_view
 from django.urls import path, include
 from django.conf import settings
 from django.views.static import serve
+from django.views.decorators.cache import cache_page
 import os
 
 from catalog.sitemaps import sitemaps
 from catalog import views as catalog_views
+
+SITEMAP_CACHE_TTL = 60 * 60
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('robots.txt', catalog_views.robots_txt, name='robots-txt'),
     path(
         'sitemap.xml',
-        sitemap_index_view,
+        cache_page(SITEMAP_CACHE_TTL)(sitemap_index_view),
         {'sitemaps': sitemaps, 'sitemap_url_name': 'sitemaps'},
         name='sitemap-index',
     ),
     path(
         'sitemap-<section>.xml',
-        sitemap_view,
+        cache_page(SITEMAP_CACHE_TTL)(sitemap_view),
         {'sitemaps': sitemaps},
         name='sitemaps',
     ),

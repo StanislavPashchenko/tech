@@ -3,6 +3,7 @@ import re
 from functools import lru_cache
 
 from django.conf import settings
+from django.apps import apps
 from django.utils.text import slugify
 
 BRAND_NAME_ALIASES = {
@@ -41,7 +42,19 @@ def format_fallback_brand(value):
 def load_vacuum_brand_names():
     file_path = os.path.join(settings.BASE_DIR, 'brands.txt')
     if not os.path.exists(file_path):
-        return tuple()
+        try:
+            Category = apps.get_model('catalog', 'Category')
+            VacuumBrand = apps.get_model('catalog', 'VacuumBrand')
+            cleaners_category = Category.objects.filter(id_name='cleaners').only('id').first()
+            if cleaners_category is None:
+                return tuple()
+            return tuple(
+                VacuumBrand.objects.filter(category=cleaners_category)
+                .order_by('name')
+                .values_list('name', flat=True)
+            )
+        except Exception:
+            return tuple()
     with open(file_path, 'r', encoding='utf-8') as file:
         brand_names = [
             line.replace('☐', '', 1).strip()

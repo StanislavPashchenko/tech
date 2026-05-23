@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 from db_utils import get_django_database_config
 
@@ -49,6 +52,7 @@ if not SECRET_KEY:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in {'1', 'true', 'yes', 'on'}
+IS_RUNNING_TESTS = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
@@ -105,11 +109,13 @@ WSGI_APPLICATION = 'tech_site.wsgi.application'
 DATABASES = get_django_database_config()
 
 # Caching
-if os.getenv("REDIS_URL"):
+REDIS_URL = os.getenv("REDIS_URL")
+
+if REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": os.getenv("REDIS_URL"),
+            "LOCATION": REDIS_URL,
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             }
@@ -119,14 +125,24 @@ else:
     # Local fallback without Redis
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "BACKEND": (
+                "django.core.cache.backends.dummy.DummyCache"
+                if IS_RUNNING_TESTS
+                else "django.core.cache.backends.locmem.LocMemCache"
+            ),
             "LOCATION": "unique-snowflake",
         }
     }
 
-# Cache sessions in Redis
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+if REDIS_URL:
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+else:
+    # The DB-backed fallback keeps local development and tests stable without Redis.
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+if not DEBUG and not REDIS_URL:
+    raise ImproperlyConfigured("REDIS_URL must be set when DEBUG=False.")
 
 
 # Password validation
@@ -172,12 +188,17 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
     },
 }
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+ARTICLE_IMAGE_CLOUDFLARE_PREFIX = os.getenv('ARTICLE_IMAGE_CLOUDFLARE_PREFIX', '')
 
 # Security settings for production
 if not DEBUG:
