@@ -20,6 +20,72 @@ body.search-dark {
 body.search-dark .site-main {
   background: transparent !important;
 }
+
+.search-results-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  margin-top: 24px;
+  padding: 8px;
+  border: 1px solid rgba(79, 209, 255, 0.24);
+  border-radius: 20px;
+  background: rgba(17, 37, 58, 0.78);
+  box-shadow: 0 18px 40px rgba(5, 7, 10, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.search-results-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f5f7fa;
+  caret-color: #f5f7fa;
+  padding: 10px 12px;
+  font-size: 1rem;
+  color-scheme: dark;
+}
+
+.search-results-form input::placeholder {
+  color: #9fb0c7;
+  opacity: 1;
+}
+
+.search-results-form input:-webkit-autofill,
+.search-results-form input:-webkit-autofill:hover,
+.search-results-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f7fa;
+  caret-color: #f5f7fa;
+  box-shadow: 0 0 0 1000px rgba(17, 37, 58, 0.98) inset;
+  -webkit-box-shadow: 0 0 0 1000px rgba(17, 37, 58, 0.98) inset;
+  transition: background-color 9999s ease-out;
+}
+
+.search-results-form input:autofill {
+  color: #f5f7fa;
+  caret-color: #f5f7fa;
+  box-shadow: 0 0 0 1000px rgba(17, 37, 58, 0.98) inset;
+}
+
+.search-results-form button {
+  flex: 0 0 auto;
+  border: 1px solid #8b5cf6;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #fff;
+  font-weight: 800;
+  padding: 11px 18px;
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.24);
+}
+
+@media (max-width: 767.98px) {
+  .search-results-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
 </style>
 {% endblock %}
 
@@ -49,6 +115,18 @@ body.search-dark .site-main {
                 Open any product page to view specifications and common breakdowns.
             {% endif %}
         </p>
+        <form class="search-results-form" action="{% url 'search' lang %}" method="get" role="search">
+            <input
+                type="search"
+                name="q"
+                value="{{ query|default:'' }}"
+                placeholder="{% if lang == 'ru' %}Поиск по модели, бренду или ошибке{% elif lang == 'ua' %}Пошук за моделлю, брендом або помилкою{% else %}Search by model, brand, or issue{% endif %}"
+                aria-label="{% if lang == 'ru' %}Строка поиска{% elif lang == 'ua' %}Рядок пошуку{% else %}Search field{% endif %}"
+            >
+            <button type="submit">
+                {% if lang == 'ru' %}Найти{% elif lang == 'ua' %}Знайти{% else %}Search{% endif %}
+            </button>
+        </form>
     </div>
     <div class="section-summary-card">
         <strong>{{ products_count }}</strong>

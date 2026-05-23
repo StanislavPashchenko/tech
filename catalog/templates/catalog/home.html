@@ -212,67 +212,6 @@
     </div>
 </section>
 
-<!-- FEATURES SECTION -->
-<section class="features-section">
-    <div class="container">
-        <div class="features-grid">
-            <div class="feature-card feature-card-large">
-                <div class="feature-icon">🔍</div>
-                <h3 class="feature-title">
-                    {% if lang == 'ru' %}Поиск по коду ошибки{% elif lang == 'ua' %}Пошук за кодом помилки{% else %}Search by Error Code{% endif %}
-                </h3>
-                <p class="feature-description">
-                    {% if lang == 'ru' %}
-                        Введите код ошибки с дисплея вашей техники и получите подробное описание проблемы и способы её решения.
-                    {% elif lang == 'ua' %}
-                        Введіть код помилки з дисплея вашої техніки та отримайте детальний опис проблеми та способи її вирішення.
-                    {% else %}
-                        Enter the error code from your appliance's display and get a detailed description of the problem and solutions.
-                    {% endif %}
-                </p>
-                <a href="{% url 'search' lang %}" class="feature-link">
-                    {% if lang == 'ru' %}Попробовать{% elif lang == 'ua' %}Спробувати{% else %}Try Now{% endif %}
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">📚</div>
-                <h3 class="feature-title">
-                    {% if lang == 'ru' %}База знаний{% elif lang == 'ua' %}База знань{% else %}Knowledge Base{% endif %}
-                </h3>
-                <p class="feature-description">
-                    {% if lang == 'ru' %}
-                        Тысячи статей по ремонту бытовой техники с пошаговыми инструкциями.
-                    {% elif lang == 'ua' %}
-                        Тисячі статей з ремонту побутової техніки з покроковими інструкціями.
-                    {% else %}
-                        Thousands of appliance repair articles with step-by-step instructions.
-                    {% endif %}
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <h3 class="feature-title">
-                    {% if lang == 'ru' %}Типовые поломки{% elif lang == 'ua' %}Типові поломки{% else %}Common Issues{% endif %}
-                </h3>
-                <p class="feature-description">
-                    {% if lang == 'ru' %}
-                        Подробные описания частых неисправностей и способы их устранения.
-                    {% elif lang == 'ua' %}
-                        Детальні описи частих несправностей та способи їх усунення.
-                    {% else %}
-                        Detailed descriptions of common malfunctions and how to fix them.
-                    {% endif %}
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
 <!-- CTA SECTION -->
 <section class="cta-section">
     <div class="container">

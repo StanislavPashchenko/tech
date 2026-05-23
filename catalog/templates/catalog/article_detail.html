@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load static %}
 
 {% block title %}{{ article.title }} - TechGuide{% endblock %}
 
@@ -7,38 +8,1053 @@
 {% block og_title %}{{ article.title }} - {% endblock %}
 {% block og_description %}{{ article.excerpt|default:article.title|truncatechars:160 }}{% endblock %}
 
+{% block body_class %}site-shell articles-page{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================
+   ARTICLE DETAIL — FULL WIDTH CONTENT
+   ============================================ */
+:root {
+    /* Светлая тема — максимальный контраст */
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+    --bg-code: #0f172a;
+    --bg-muted: #f1f5f9;
+    --text-primary: #0b1120;
+    --text-body: #1e293b;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-faint: #94a3b8;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-light: #eff6ff;
+    --accent-soft: #dbeafe;
+    --accent-text: #1e40af;
+    --accent-warm: #f59e0b;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --border-subtle: #f1f5f9;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 100px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+    --transition: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-serif: Georgia, "Times New Roman", serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, Monaco, Consolas, monospace;
+    --max-content: 820px;
+    --max-wide: 1100px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-page: #0b1120;
+        --bg-card: #141b2d;
+        --bg-elevated: #1a2236;
+        --bg-code: #020617;
+        --bg-muted: #1a2236;
+        --text-primary: #f8fafc;
+        --text-body: #e2e8f0;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --text-faint: #64748b;
+        --accent: #60a5fa;
+        --accent-hover: #93c5fd;
+        --accent-light: #1e3a8a;
+        --accent-soft: #1e40af;
+        --accent-text: #93c5fd;
+        --border: #2a3449;
+        --border-strong: #3d4860;
+        --border-subtle: #1a2236;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.55);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.7);
+    }
+}
+
+body.articles-page {
+    background-color: var(--bg-page) !important;
+    background-image: none !important;
+}
+
+.article-shell,
+.article-shell * {
+    box-sizing: border-box;
+}
+
+.article-shell {
+    background: var(--bg-page) !important;
+    color: var(--text-body) !important;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+}
+
+.article-container {
+    max-width: var(--max-wide);
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ============================================
+   READING PROGRESS BAR
+   ============================================ */
+.reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: transparent;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.reading-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    transition: width 80ms linear;
+}
+
+/* ============================================
+   BREADCRUMBS
+   ============================================ */
+.article-breadcrumbs {
+    padding: 24px 0 16px;
+}
+
+.breadcrumb-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+}
+
+.breadcrumb-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.breadcrumb-list a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition);
+}
+
+.breadcrumb-list a:hover {
+    color: var(--accent);
+}
+
+.breadcrumb-list .active {
+    color: var(--text-primary);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 280px;
+}
+
+.breadcrumb-separator {
+    color: var(--text-faint);
+    font-size: 0.75rem;
+}
+
+/* ============================================
+   ARTICLE TOP BAR
+   ============================================ */
+.article-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0 32px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--bg-card);
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-back:hover {
+    background: var(--accent);
+    color: #ffffff !important;
+    border-color: var(--accent);
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgb(37 99 235 / 0.3);
+}
+
+.btn-back svg {
+    transition: transform var(--transition);
+    stroke: currentColor;
+}
+
+.btn-back:hover svg {
+    transform: translateX(-3px);
+}
+
+.lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-sm);
+}
+
+.lang-switcher a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+}
+
+.lang-switcher a:hover {
+    color: var(--accent);
+    background: var(--bg-muted);
+}
+
+.lang-switcher a.active {
+    background: var(--accent);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgb(37 99 235 / 0.35);
+}
+
+.article-meta-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--accent-light);
+    color: var(--accent-text) !important;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--accent-soft);
+}
+
+.meta-badge-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: metaPulse 2s ease-in-out infinite;
+}
+
+@keyframes metaPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* ============================================
+   ARTICLE HEADER
+   ============================================ */
+.article-header {
+    padding: 16px 0 48px;
+    max-width: var(--max-content);
+    margin: 0 auto;
+}
+
+.article-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text-primary) !important;
+    margin: 0 0 24px;
+    letter-spacing: -0.03em;
+}
+
+.article-lead {
+    font-size: 1.25rem;
+    line-height: 1.55;
+    color: var(--text-secondary) !important;
+    margin: 0 0 32px;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+}
+
+.article-meta-hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    flex-wrap: wrap;
+}
+
+.meta-hero-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-secondary) !important;
+}
+
+.meta-hero-item svg {
+    width: 15px;
+    height: 15px;
+    stroke: var(--accent);
+    flex-shrink: 0;
+}
+
+.meta-hero-divider {
+    width: 4px;
+    height: 4px;
+    background: var(--text-faint);
+    border-radius: 50%;
+}
+
+/* ============================================
+   ARTICLE COVER / CAROUSEL
+   ============================================ */
+.article-hero-media {
+    max-width: var(--max-wide);
+    margin: 0 auto 56px;
+    padding: 0 24px;
+}
+
+.article-cover,
+.article-carousel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 8;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+}
+
+.article-cover img,
+.article-carousel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.carousel-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.carousel-item {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+}
+
+.carousel-item.active {
+    position: relative;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: #ffffff;
+    color: #0f172a !important;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+    z-index: 2;
+}
+
+.carousel-control-prev { left: 20px; }
+.carousel-control-next { right: 20px; }
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    background: var(--accent);
+    color: #ffffff !important;
+    transform: translateY(-50%) scale(1.08);
+    border-color: var(--accent);
+}
+
+.carousel-control-prev svg,
+.carousel-control-next svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.carousel-indicators {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 8px 12px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(8px);
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--transition);
+}
+
+.carousel-dot.active {
+    background: #ffffff;
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* ============================================
+   ARTICLE CONTENT — FULL WIDTH
+   ============================================ */
+.article-content-wrapper {
+    max-width: var(--max-content);
+    margin: 0 auto 80px;
+    padding: 0 24px;
+}
+
+.article-content {
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    color: var(--text-body) !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.article-content > *:first-child {
+    margin-top: 0;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+    color: var(--text-primary) !important;
+    font-weight: 800;
+}
+
+.article-content h2 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    margin: 2.5rem 0 1rem;
+    letter-spacing: -0.02em;
+    position: relative;
+    padding-left: 18px;
+}
+
+.article-content h2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.25em;
+    width: 4px;
+    height: 1.25em;
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+.article-content h3 {
+    font-size: 1.375rem;
+    line-height: 1.3;
+    margin: 2rem 0 0.875rem;
+    letter-spacing: -0.015em;
+}
+
+.article-content h4 {
+    font-size: 1.125rem;
+    line-height: 1.35;
+    margin: 1.75rem 0 0.75rem;
+}
+
+.article-content h5,
+.article-content h6 {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    margin: 1.5rem 0 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.article-content p {
+    margin: 0 0 1.25rem;
+    color: var(--text-body) !important;
+}
+
+.article-content a {
+    color: var(--accent) !important;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+.article-content a:hover {
+    color: var(--accent-hover) !important;
+    text-decoration-thickness: 2px;
+}
+
+.article-content strong,
+.article-content b {
+    font-weight: 700;
+    color: var(--text-primary) !important;
+}
+
+.article-content em,
+.article-content i {
+    font-style: italic;
+    color: var(--text-body) !important;
+}
+
+.article-content ul,
+.article-content ol {
+    margin: 0 0 1.5rem;
+    padding-left: 1.5rem;
+    color: var(--text-body) !important;
+}
+
+.article-content li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.25rem;
+    color: var(--text-body) !important;
+}
+
+.article-content ul li::marker {
+    color: var(--accent);
+    font-size: 1.2em;
+}
+
+.article-content ol li::marker {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.article-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    margin: 1.5rem 0;
+    box-shadow: var(--shadow-md);
+    display: block;
+    border: 1px solid var(--border);
+}
+
+.article-content figure {
+    margin: 2rem 0;
+}
+
+.article-content figcaption {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-muted) !important;
+    margin-top: 0.75rem;
+    font-style: italic;
+}
+
+.article-content blockquote {
+    margin: 2rem 0;
+    padding: 1.25rem 1.5rem;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    font-size: 1.0625rem;
+    font-style: italic;
+    color: var(--text-primary) !important;
+}
+
+.article-content blockquote p {
+    color: var(--text-primary) !important;
+}
+
+.article-content blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+.article-content code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--accent-soft);
+    color: var(--accent-text) !important;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+}
+
+.article-content pre {
+    background: var(--bg-code);
+    color: #e2e8f0 !important;
+    padding: 20px 24px;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-md);
+}
+
+.article-content pre code {
+    background: transparent;
+    color: inherit !important;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    border: none;
+    font-weight: 400;
+}
+
+.article-content hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+    margin: 3rem auto;
+    max-width: 200px;
+}
+
+.article-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.9375rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-card);
+}
+
+.article-content th {
+    background: var(--accent-light);
+    color: var(--accent-text) !important;
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--accent-soft);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.article-content td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-body) !important;
+}
+
+.article-content tr:last-child td {
+    border-bottom: none;
+}
+
+.article-content tr:hover td {
+    background: var(--bg-muted);
+}
+
+/* ============================================
+   ARTICLE FOOTER
+   ============================================ */
+.article-footer {
+    max-width: var(--max-wide);
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    border-top: 1px solid var(--border);
+}
+
+.footer-cta {
+    background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--accent-soft);
+    border-radius: var(--radius-xl);
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.footer-cta::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.footer-cta > * {
+    position: relative;
+    z-index: 1;
+}
+
+.footer-cta h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary) !important;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+}
+
+.footer-cta p {
+    color: var(--text-secondary) !important;
+    margin: 0 0 24px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.footer-cta-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    transition: all var(--transition);
+}
+
+.cta-btn svg {
+    stroke: currentColor;
+}
+
+.cta-btn-primary {
+    background: var(--accent);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgb(37 99 235 / 0.3);
+}
+
+.cta-btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgb(37 99 235 / 0.4);
+    color: #ffffff !important;
+}
+
+.cta-btn-outline {
+    background: var(--bg-card);
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-strong);
+}
+
+.cta-btn-outline:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent) !important;
+    transform: translateY(-2px);
+}
+
+/* Back to top floating button */
+.back-to-top {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgb(37 99 235 / 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: all var(--transition);
+    z-index: 100;
+}
+
+.back-to-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.back-to-top:hover {
+    background: var(--accent-hover);
+    transform: translateY(-3px);
+}
+
+.back-to-top svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .article-topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .topbar-actions {
+        justify-content: space-between;
+    }
+    .article-meta-top {
+        justify-content: flex-start;
+    }
+    .article-title {
+        font-size: clamp(1.75rem, 7vw, 2.25rem);
+    }
+    .article-lead {
+        font-size: 1.1rem;
+    }
+    .article-hero-media {
+        padding: 0 16px;
+        margin-bottom: 40px;
+    }
+    .article-cover,
+    .article-carousel {
+        aspect-ratio: 16 / 10;
+        border-radius: var(--radius-lg);
+    }
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 40px;
+        height: 40px;
+    }
+    .carousel-control-prev { left: 12px; }
+    .carousel-control-next { right: 12px; }
+    .article-header {
+        padding: 8px 0 32px;
+    }
+    .article-content-wrapper {
+        padding: 0 16px;
+    }
+    .article-content h2 {
+        font-size: 1.5rem;
+        padding-left: 14px;
+    }
+    .article-content h3 {
+        font-size: 1.2rem;
+    }
+    .article-content pre {
+        padding: 16px;
+        font-size: 0.8125rem;
+    }
+    .footer-cta {
+        padding: 28px 20px;
+    }
+    .footer-cta h3 {
+        font-size: 1.25rem;
+    }
+    .footer-cta-actions {
+        flex-direction: column;
+    }
+    .cta-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .breadcrumb-list .active {
+        max-width: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .lang-switcher a {
+        min-width: 34px;
+        height: 32px;
+        padding: 0 10px;
+        font-size: 0.75rem;
+    }
+    .btn-back {
+        padding: 9px 14px;
+        font-size: 0.8125rem;
+    }
+    .meta-hero-divider {
+        display: none;
+    }
+    .article-meta-hero {
+        gap: 12px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Reading Progress Bar -->
+<div class="reading-progress">
+    <div class="reading-progress-bar" id="readingProgressBar"></div>
+</div>
+
 <article class="article-shell">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb site-breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'articles_index' lang %}">{{ labels.articles }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ article.title }}</li>
-        </ol>
+    <!-- Breadcrumbs -->
+    <nav class="article-breadcrumbs" aria-label="breadcrumb">
+        <div class="article-container">
+            <ol class="breadcrumb-list">
+                <li><a href="{% url 'index_lang' lang %}">TechGuide</a></li>
+                <li><span class="breadcrumb-separator">/</span></li>
+                <li><a href="{% url 'articles_index' lang %}">{{ labels.articles }}</a></li>
+                <li><span class="breadcrumb-separator">/</span></li>
+                <li class="active" aria-current="page">{{ article.title }}</li>
+            </ol>
+        </div>
     </nav>
 
-    <div class="article-topbar">
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'articles_index' lang %}" class="btn btn-primary">{{ labels.back_to_articles }}</a>
-            <a href="{{ language_urls.ru }}" class="btn {% if lang == 'ru' %}btn-primary{% else %}btn-outline-primary{% endif %}">RU</a>
-            <a href="{{ language_urls.ua }}" class="btn {% if lang == 'ua' %}btn-primary{% else %}btn-outline-primary{% endif %}">UA</a>
-            <a href="{{ language_urls.en }}" class="btn {% if lang == 'en' %}btn-primary{% else %}btn-outline-primary{% endif %}">EN</a>
+    <!-- Top Bar -->
+    <div class="article-container">
+        <div class="article-topbar">
+            <div class="topbar-actions">
+                <a href="{% url 'articles_index' lang %}" class="btn-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+                    </svg>
+                    {{ labels.back_to_articles }}
+                </a>
+
+                <div class="lang-switcher" role="group" aria-label="Language switcher">
+                    <a href="{{ language_urls.ru }}" class="{% if lang == 'ru' %}active{% endif %}" aria-label="Russian">RU</a>
+                    <a href="{{ language_urls.ua }}" class="{% if lang == 'ua' %}active{% endif %}" aria-label="Ukrainian">UA</a>
+                    <a href="{{ language_urls.en }}" class="{% if lang == 'en' %}active{% endif %}" aria-label="English">EN</a>
+                </div>
+            </div>
+
+            <div class="article-meta-top">
+                {% if article.category %}
+                <span class="meta-badge">
+                    <span class="meta-badge-dot"></span>
+                    {{ article.category }}
+                </span>
+                {% endif %}
+                <span class="meta-hero-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    {% if article.published_at %}{{ article.published_at|date:"d.m.Y H:i" }}{% else %}{{ article.created_at|date:"d.m.Y H:i" }}{% endif %}
+                </span>
+            </div>
         </div>
-        <span class="article-meta">
-            {% if article.published_at %}{{ article.published_at|date:"d.m.Y H:i" }}{% else %}{{ article.created_at|date:"d.m.Y H:i" }}{% endif %}
-        </span>
     </div>
 
-    <h1>{{ article.title }}</h1>
+    <!-- Article Header -->
+    <header class="article-header">
+        <h1 class="article-title">{{ article.title }}</h1>
 
-    {% if article.excerpt %}
-    <p class="article-lead">{{ article.excerpt }}</p>
-    {% endif %}
+        {% if article.excerpt %}
+        <p class="article-lead">{{ article.excerpt }}</p>
+        {% endif %}
 
+        <div class="article-meta-hero">
+            {% if article.reading_time %}
+            <span class="meta-hero-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                {% if lang == 'ru' %}{{ article.reading_time }} мин чтения{% elif lang == 'ua' %}{{ article.reading_time }} хв читання{% else %}{{ article.reading_time }} min read{% endif %}
+            </span>
+            <span class="meta-hero-divider"></span>
+            {% endif %}
+            <span class="meta-hero-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                TechGuide
+            </span>
+            {% if article.category %}
+            <span class="meta-hero-divider"></span>
+            <span class="meta-hero-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                {{ article.category }}
+            </span>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Article Cover / Carousel -->
     {% if article.display_images %}
-    <div class="mb-4">
+    <div class="article-hero-media">
         {% if article.display_images|length > 1 %}
-        <div id="article-carousel-{{ article.id }}" class="carousel slide article-carousel" data-bs-ride="carousel">
+        <div class="article-carousel" id="articleCarousel">
             <div class="carousel-inner">
                 {% for image in article.display_images %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
@@ -46,12 +1062,17 @@
                 </div>
                 {% endfor %}
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#article-carousel-{{ article.id }}" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
+            <button class="carousel-control-prev" type="button" aria-label="Previous">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg>
             </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#article-carousel-{{ article.id }}" data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
+            <button class="carousel-control-next" type="button" aria-label="Next">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M14 5l7 7-7 7"/></svg>
             </button>
+            <div class="carousel-indicators">
+                {% for image in article.display_images %}
+                <button class="carousel-dot {% if forloop.first %}active{% endif %}" data-slide="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
+                {% endfor %}
+            </div>
         </div>
         {% else %}
         {% with image=article.primary_image %}
@@ -63,8 +1084,86 @@
     </div>
     {% endif %}
 
-    <div class="article-content">
-        {{ article.content_html }}
+    <!-- Article Content — Full Width -->
+    <div class="article-content-wrapper">
+        <div class="article-content">
+            {{ article.content_html }}
+        </div>
     </div>
+
+    <!-- Footer CTA -->
+    <footer class="article-footer">
+        <div class="footer-cta">
+            <h3>{% if lang == 'ru' %}Читайте больше статей{% elif lang == 'ua' %}Читайте більше статей{% else %}Read more articles{% endif %}</h3>
+            <p>{% if lang == 'ru' %}В нашей базе знаний ещё много полезных материалов по диагностике и ремонту техники.{% elif lang == 'ua' %}У нашій базі знань ще багато корисних матеріалів з діагностики та ремонту техніки.{% else %}Our knowledge base has many more helpful materials on diagnostics and repair.{% endif %}</p>
+            <div class="footer-cta-actions">
+                <a href="{% url 'articles_index' lang %}" class="cta-btn cta-btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M5 12l7 7M5 12l7-7"/></svg>
+                    {{ labels.back_to_articles }}
+                </a>
+                <a href="{% url 'products_index' lang %}" class="cta-btn cta-btn-outline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    {% if lang == 'ru' %}Поиск по модели{% elif lang == 'ua' %}Пошук за моделлю{% else %}Search by Model{% endif %}
+                </a>
+            </div>
+        </div>
+    </footer>
 </article>
+
+<!-- Back to top -->
+<button class="back-to-top" id="backToTop" aria-label="{% if lang == 'ru' %}Наверх{% elif lang == 'ua' %}Вгору{% else %}Back to top{% endif %}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+(function() {
+    const progressBar = document.getElementById('readingProgressBar');
+    const backToTop = document.getElementById('backToTop');
+
+    function updateProgress() {
+        const winScroll = document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
+        if (progressBar) progressBar.style.width = scrolled + '%';
+        if (backToTop) {
+            if (winScroll > 600) backToTop.classList.add('visible');
+            else backToTop.classList.remove('visible');
+        }
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    if (backToTop) {
+        backToTop.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    const carousel = document.getElementById('articleCarousel');
+    if (carousel) {
+        const items = carousel.querySelectorAll('.carousel-item');
+        const dots = carousel.querySelectorAll('.carousel-dot');
+        const prevBtn = carousel.querySelector('.carousel-control-prev');
+        const nextBtn = carousel.querySelector('.carousel-control-next');
+        let current = 0;
+
+        function showSlide(index) {
+            items.forEach((item, i) => item.classList.toggle('active', i === index));
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+            current = index;
+        }
+
+        function next() { showSlide((current + 1) % items.length); }
+        function prev() { showSlide((current - 1 + items.length) % items.length); }
+
+        if (nextBtn) nextBtn.addEventListener('click', next);
+        if (prevBtn) prevBtn.addEventListener('click', prev);
+        dots.forEach((dot, i) => dot.addEventListener('click', function() { showSlide(i); }));
+
+        let autoPlay = setInterval(next, 6000);
+        carousel.addEventListener('mouseenter', () => clearInterval(autoPlay));
+        carousel.addEventListener('mouseleave', () => { autoPlay = setInterval(next, 6000); });
+    }
+})();
+</script>
 {% endblock %}
