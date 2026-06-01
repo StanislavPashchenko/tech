@@ -176,6 +176,93 @@ class FixWashingNoDryFromEkTests(SimpleTestCase):
         self.assertTrue(specs_need_page_check(specs, 'ru'))
 
 
+class ProductDisplayNameFormattingTests(SimpleTestCase):
+    def test_keeps_only_brand_and_model_for_russian_name(self):
+        product = SimpleNamespace(
+            name_ru='Стиральная машина Whirlpool WRSB 7259 WB UA белый',
+            name_ua='',
+            name_en='',
+            brand_id=None,
+            brand=None,
+            category_id=None,
+            category=None,
+            product_folder='',
+        )
+
+        self.assertEqual(
+            views._build_display_product_name(product, 'ru'),
+            'Whirlpool WRSB 7259 WB UA',
+        )
+
+    def test_keeps_only_brand_and_model_for_ukrainian_name(self):
+        product = SimpleNamespace(
+            name_ru='',
+            name_ua='Пральна машина Whirlpool WRSB 7259 WB UA білий',
+            name_en='',
+            brand_id=None,
+            brand=None,
+            category_id=None,
+            category=None,
+            product_folder='',
+        )
+
+        self.assertEqual(
+            views._build_display_product_name(product, 'ua'),
+            'Whirlpool WRSB 7259 WB UA',
+        )
+
+    def test_removes_english_color_suffix_when_brand_is_already_first(self):
+        product = SimpleNamespace(
+            name_ru='',
+            name_ua='',
+            name_en='Zilan ZLN8078 black',
+            brand_id=None,
+            brand=None,
+            category_id=None,
+            category=None,
+            product_folder='',
+        )
+
+        self.assertEqual(
+            views._build_display_product_name(product, 'en'),
+            'Zilan ZLN8078',
+        )
+
+    def test_removes_russian_color_suffix_for_cooker(self):
+        product = SimpleNamespace(
+            name_ru='Плита Zilan ZLN8078 черный',
+            name_ua='',
+            name_en='',
+            brand_id=None,
+            brand=None,
+            category_id=None,
+            category=None,
+            product_folder='',
+        )
+
+        self.assertEqual(
+            views._build_display_product_name(product, 'ru'),
+            'Zilan ZLN8078',
+        )
+
+    def test_removes_color_before_trailing_parentheses_code(self):
+        product = SimpleNamespace(
+            name_ru='',
+            name_ua='',
+            name_en='AEG L7FEC48SR white (914 550 036)',
+            brand_id=None,
+            brand=None,
+            category_id=None,
+            category=None,
+            product_folder='',
+        )
+
+        self.assertEqual(
+            views._build_display_product_name(product, 'en'),
+            'AEG L7FEC48SR',
+        )
+
+
 class BreakdownSlugTests(SimpleTestCase):
     def test_slug_ignores_device_model_codes_after_dash(self):
         breakdown = SimpleNamespace(
@@ -2332,12 +2419,13 @@ class HomePageViewTests(TestCase):
         )
         self.assertGreaterEqual(response.context['home_metrics'][2]['value'], 1)
 
-    def test_homepage_does_not_render_featured_articles_stream(self):
+    def test_homepage_renders_latest_featured_articles_stream(self):
         response = self.client.get(reverse('index_lang', args=['ru']))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['featured_articles'], [])
-        self.assertNotContains(response, self.article.title_ru)
+        self.assertEqual(len(response.context['featured_articles']), 1)
+        self.assertEqual(response.context['featured_articles'][0]['id'], self.article.id)
+        self.assertContains(response, self.article.title_ru)
 
 
 @override_settings(

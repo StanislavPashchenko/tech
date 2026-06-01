@@ -100,6 +100,12 @@ _BREAKDOWN_PREFIX_PATTERN = re.compile(
 _BREAKDOWN_PARENTHETICAL_PATTERN = re.compile(r'\s*\([^)]*\)\s*')
 _PRODUCT_SLUG_ID_PATTERN = re.compile(r'_p(?P<id>\d+)$')
 _BREAKDOWN_SLUG_ID_PATTERN = re.compile(r'_b(?P<id>\d+)$')
+_PRODUCT_NAME_TRAILING_COLOR_PATTERNS = (
+    re.compile(r'\s+(?:черн(?:ый|ая|ое|ые|ого|ой|ую|ым|ом)|бел(?:ый|ая|ое|ые|ого|ой|ую|ым|ом))\s*$', re.IGNORECASE),
+    re.compile(r'\s+(?:чорн(?:ий|а|е|і|ого|ій|у|им|ому)|біл(?:ий|а|е|і|ого|ій|у|им|ому))\s*$', re.IGNORECASE),
+    re.compile(r'\s+(?:black|white|silver|gray|grey|red|blue|green|beige)\s*$', re.IGNORECASE),
+)
+_PRODUCT_NAME_TRAILING_PARENTHESIS_PATTERN = re.compile(r'\s*\([^)]*\)\s*$')
 
 PUBLIC_PAGE_CACHE_TTL = 60 * 15
 SEARCH_PAGE_CACHE_TTL = 60 * 5
@@ -367,6 +373,36 @@ def _normalize_slug_value(value):
 def _normalize_article_slug_value(value):
     normalized_value = slugify(value, allow_unicode=True)
     return normalized_value or value
+
+
+def _build_display_product_name(product, lang):
+    raw_name = (getattr(product, f'name_{lang}', '') or getattr(product, 'name', '') or '').strip()
+    if not raw_name:
+        return ''
+
+    brand_name = (_extract_brand(product, lang) or '').strip()
+    if not brand_name:
+        return raw_name
+
+    normalized_name = re.sub(r'\s+', ' ', raw_name)
+    normalized_brand = re.sub(r'\s+', ' ', brand_name)
+    lower_name = normalized_name.lower()
+    lower_brand = normalized_brand.lower()
+
+    brand_index = lower_name.find(lower_brand)
+    if brand_index >= 0:
+        display_name = normalized_name[brand_index:].strip(' ,;-')
+    else:
+        display_name = normalized_name
+
+    display_name = _PRODUCT_NAME_TRAILING_PARENTHESIS_PATTERN.sub('', display_name).strip(' ,;-')
+
+    for pattern in _PRODUCT_NAME_TRAILING_COLOR_PATTERNS:
+        updated_name = pattern.sub('', display_name).strip(' ,;-')
+        if updated_name:
+            display_name = updated_name
+
+    return display_name or normalized_name
 
 
 def _extract_product_id_from_slug(product_slug):
@@ -1026,7 +1062,8 @@ def _prepare_breakdowns(raw_breakdowns, labels, lang):
 
 
 def _prepare_product(product, lang):
-    product.name = getattr(product, f'name_{lang}')
+    product.original_name = getattr(product, f'name_{lang}')
+    product.name = _build_display_product_name(product, lang)
     product.description = getattr(product, f'description_{lang}')
     product.specs = _get_specs_for_language(product, lang)
     product.brand_name = _extract_brand(product, lang)
