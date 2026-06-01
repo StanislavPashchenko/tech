@@ -1168,9 +1168,36 @@ def index(request, lang='ru'):
     }
     home_content = _get_homepage_content(lang)
 
+    latest_articles = Article.objects.filter(
+        is_published=True
+    ).select_related().prefetch_related('images').order_by('-published_at', '-created_at')[:8]
+    
+    featured_articles = []
+    for article in latest_articles:
+        title_attr = f'title_{lang}'
+        excerpt_attr = f'excerpt_{lang}'
+        title = getattr(article, title_attr, '') or article.title_ru or article.title_en or article.slug
+        excerpt = getattr(article, excerpt_attr, '') or article.excerpt_ru or article.excerpt_en or ''
+        
+        primary_image = article.images.first()
+        primary_image_url = primary_image.image_url if primary_image else None
+        primary_image_alt = getattr(primary_image, f'alt_{lang}', '') or getattr(primary_image, 'alt_ru', '') or title if primary_image else ''
+        
+        featured_articles.append({
+            'id': article.id,
+            'slug': article.slug,
+            'title': title,
+            'excerpt': excerpt,
+            'created_at': article.created_at,
+            'published_at': article.published_at,
+            'primary_image_url': primary_image_url,
+            'primary_image_alt': primary_image_alt,
+            'detail_url': reverse('article_detail', kwargs={'lang': lang, 'article_id': article.id, 'article_slug': article.slug}),
+        })
+
     context = {
         'categories': categories[:9],
-        'featured_articles': [],
+        'featured_articles': featured_articles,
         'home_content': home_content,
         'home_metrics': [
             {

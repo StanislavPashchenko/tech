@@ -857,6 +857,35 @@ html body.site-shell.site-shell-home {
 }
 
 /* =============================================
+   ARTICLES GRID 2x4 LAYOUT
+   ============================================= */
+
+.articles-grid-2x4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+/* Responsive adjustments for 2x4 grid */
+@media (max-width: 1200px) {
+  .articles-grid-2x4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .articles-grid-2x4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .articles-grid-2x4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================
    CTA SECTION
    ============================================= */
 

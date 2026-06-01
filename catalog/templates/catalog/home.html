@@ -116,7 +116,7 @@
         </div>
         
         <div class="articles-grid">
-            {% for article in featured_articles|slice:":4" %}
+            {% for article in featured_articles %}
             <article class="article-card">
                 <a href="{{ article.detail_url }}" class="article-card-link">
                     {% if article.primary_image_url %}
