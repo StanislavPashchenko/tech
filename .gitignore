@@ -102,3 +102,36 @@ _penpot_*.js
 !/catalog/**
 !/tech_site/
 !/tech_site/**
+
+# Backups and dumps
+*.backup
+*.dump
+*.sql
+*.sql.gz
+*.tar.gz
+
+pg_dump*
+postgres*.sql
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+*.p12
+
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
